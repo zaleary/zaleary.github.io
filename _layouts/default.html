@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>
+      {% if page.title and page.title != "Home" %}
+        {{ page.title }} - {{ site.title }}
+      {% else %}
+        {{ site.title }}
+      {% endif %}
+    </title>
+    <meta name="description" content="{{ page.excerpt | default: site.description | strip_html | strip_newlines | truncate: 160 }}" />
+    <link rel="stylesheet" href="{{ '/assets/css/styles.css' | relative_url }}" />
+  </head>
+  <body>
+    <main class="page">
+      <aside class="sidebar">
+        <img
+          class="headshot"
+          src="{{ '/assets/images/headshot.jpg' | relative_url }}"
+          alt="Headshot of Zack O'Leary"
+          width="160"
+          height="160"
+        />
+        <nav class="learning">
+          <span class="label">Learning</span>
+          <a class="link" href="https://www.padi.com/" target="_blank" rel="noreferrer">Diving</a>
+          <a class="link" href="https://www.ussailing.org/" target="_blank" rel="noreferrer">Sailing</a>
+          <a class="link" href="https://www.openstreetmap.org/" target="_blank" rel="noreferrer">Mapping</a>
+        </nav>
+      </aside>
+
+      <section class="content">
+        <div class="content-inner">
+          {{ content }}
+        </div>
+      </section>
+
+      <footer class="footer">
+        <span class="footer-blurb">
+          {{ site.description }}
+        </span>
+        <a class="link" href="mailto:me@zaleary.tv">Email Me</a>
+        <a class="link" href="https://www.linkedin.com/in/zaleary/" target="_blank" rel="noreferrer">LinkedIn</a>
+      </footer>
+    </main>
+  </body>
+</html>
