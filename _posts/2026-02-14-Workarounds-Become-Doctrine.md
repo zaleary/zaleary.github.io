@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "When Workarounds Become Doctrine"
-date: 2026-02-16 14:30:00 -0500
+date: 2026-02-14 09:00:00 -0500
 categories:
 ---
 
