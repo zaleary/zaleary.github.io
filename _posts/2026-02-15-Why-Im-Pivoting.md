@@ -2,10 +2,9 @@
 layout: post
 title: "Why I'm Pivoting"
 date: 2026-02-15 09:00:00 -0500
-categories:
----
+excerpt: "Stepping out of the exam room, looking for something bigger."
 
-# Why I'm Pivoting
+---
 
 I’ve been wrestling with burnout since I started practicing medicine. I assumed, and a few times was directly told, I was the problem: efficiency, boundaries, documentation speed. Maybe I needed thicker skin.
 

@@ -2,10 +2,9 @@
 layout: post
 title: "When Workarounds Become Doctrine"
 date: 2026-02-14 09:00:00 -0500
-categories:
----
+excerpt: "What attempting to fix workarounds revealed about my blind spots."
 
-# When Workarounds Become Doctrine
+---
 
 The problem: I was drowning in unnecessary texts and emails because leaders weren't making decisions, they were just telling their teams to forward everything to me.
 
