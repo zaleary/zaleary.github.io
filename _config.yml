@@ -1,0 +1,7 @@
+title: Zaleary Blog
+description: Personal blog powered by Jekyll on GitHub Pages
+url: "https://zaleary.github.io"
+baseurl: ""
+theme: minima
+plugins:
+  - jekyll-feed
