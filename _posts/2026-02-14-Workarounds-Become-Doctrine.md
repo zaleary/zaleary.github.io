@@ -16,7 +16,7 @@ It’s a friction I’ve felt since I joined the organization: everything has a 
 
 This system "works" because subject matter experts act as human answering services. Email so-and-so instead of following process, get an answer. Fast, personalized, correct. It's not sustainable. It just hasn't collapsed yet.
 
-##My Options
+## My Options
 
 I had three options. One, polish the slide deck: make it pretty, add everything he suggested, keep myself busy producing a better artifact that nobody asked for. Two, build actual infrastructure: learn the standards, create the architecture, get stakeholder buy-in, run training. The right answer if you have authority or dedicated time. I had neither. Or three, acknowledge system boundaries and stop trying to solve problems I don't own. I chose option 3. Mainly.
 
