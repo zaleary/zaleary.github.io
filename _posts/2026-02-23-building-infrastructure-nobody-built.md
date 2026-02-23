@@ -49,4 +49,4 @@ This won't be my system to carry anymore, but I want it fixed before I hand it o
 
 If the staff comes back with feedback, I'll revise. If leadership identifies what enforcement looks like in practice, I'll incorporate it. I can control the documentation I generate. I can control what happens in the room with each patient. I can control the system I design and operate. That's it. Not the command climate. Not whether anyone reads the email. Just the work I put in front of them.
 
-It's not the most satisfying place to land. But I've been carrying this long enough, that lightening it just a little bit before the handoff still feels like a win.
+It's not the most satisfying place to land. But I've been carrying this long enough, lightening it just a little bit before the handoff still feels like a win.
