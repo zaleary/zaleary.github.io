@@ -59,6 +59,14 @@ body {
   text-align: center;
 }
 
+.projects {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-items: center;
+  text-align: center;
+}
+
 .headshot {
   width: 150px;
   height: 150px;
@@ -229,6 +237,11 @@ h3 {
   }
 
   .connect {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .projects {
     align-items: flex-start;
     text-align: left;
   }
