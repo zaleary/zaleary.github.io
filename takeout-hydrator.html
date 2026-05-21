@@ -1,0 +1,930 @@
+---
+layout: default
+title: Takeout Hydrator
+permalink: /takeout-hydrator/
+---
+
+<style>
+  .content-inner { align-items: flex-start; }
+
+  .th-subtitle { color: var(--muted); font-size: 1.05rem; margin: 0 0 1.6rem; }
+
+  .th-steps { display: grid; gap: 1rem; max-width: 560px; width: 100%; }
+
+  .th-step {
+    background: var(--card);
+    border: 1px solid rgba(27,27,27,0.08);
+    border-radius: 16px;
+    box-shadow: 0 4px 24px var(--shadow);
+    overflow: hidden;
+    transition: opacity 200ms ease;
+  }
+
+  .th-step.locked { opacity: 0.4; pointer-events: none; user-select: none; }
+
+  .th-step-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.1rem 1.5rem;
+    border-bottom: 1px solid rgba(27,27,27,0.06);
+  }
+
+  .th-step.collapsed .th-step-header { border-bottom: none; }
+
+  .th-step-num {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: white;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 0.75rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background 200ms ease;
+  }
+
+  .th-step-num.done { background: #16a34a; }
+
+  .th-step-title {
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 700; font-size: 0.95rem;
+    color: var(--ink);
+  }
+
+  .th-step-body { padding: 1.3rem 1.5rem; display: grid; gap: 1rem; }
+  .th-step.collapsed .th-step-body { display: none; }
+
+  /* Tier selector */
+  .th-tiers { display: grid; gap: 0.6rem; }
+
+  .th-tier {
+    border: 2px solid rgba(27,27,27,0.12);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    cursor: pointer;
+    background: transparent;
+    text-align: left; width: 100%;
+    transition: border-color 150ms ease, background 150ms ease;
+  }
+
+  .th-tier:hover { border-color: var(--accent); }
+  .th-tier.selected { border-color: var(--accent); background: rgba(109,74,165,0.05); }
+  .th-tier:disabled { cursor: default; }
+
+  .th-tier-name {
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 600; font-size: 0.88rem; color: var(--ink);
+  }
+
+  .th-tier-desc { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
+
+  /* Form elements */
+  .th-label {
+    display: block;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.18em;
+    color: var(--muted); margin-bottom: 0.5rem;
+  }
+
+  .th-input {
+    width: 100%;
+    padding: 0.6rem 0.85rem;
+    border: 1px solid rgba(27,27,27,0.2);
+    border-radius: 8px;
+    font-family: "Spectral", serif; font-size: 1rem;
+    background: white; color: var(--ink);
+    box-sizing: border-box;
+    transition: border-color 150ms ease;
+  }
+
+  .th-input:focus { outline: none; border-color: var(--accent); }
+  .th-input:disabled { background: var(--bg); }
+
+  .th-hint { font-size: 0.82rem; color: var(--muted); line-height: 1.5; margin: 0; }
+
+  .th-error {
+    background: #fef2f2; border: 1px solid #fca5a5;
+    border-radius: 8px; padding: 0.7rem 1rem;
+    color: #b91c1c; font-size: 0.88rem; line-height: 1.5;
+  }
+
+  .th-success {
+    background: #f0fdf4; border: 1px solid #86efac;
+    border-radius: 8px; padding: 0.7rem 1rem;
+    color: #15803d; font-size: 0.88rem;
+  }
+
+  .th-btn {
+    width: 100%; padding: 0.72rem;
+    background: var(--accent); color: white;
+    border: none; border-radius: 8px;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 0.92rem; font-weight: 600;
+    cursor: pointer; transition: opacity 150ms ease;
+  }
+
+  .th-btn:hover:not(:disabled) { opacity: 0.88; }
+  .th-btn:disabled { opacity: 0.5; cursor: default; }
+
+  .th-btn-ghost {
+    width: 100%;
+    background: none; border: 1px solid rgba(27,27,27,0.2);
+    border-radius: 8px; padding: 0.6rem 1rem;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 0.88rem; font-weight: 600;
+    color: var(--muted); cursor: pointer;
+    transition: border-color 150ms ease, color 150ms ease;
+  }
+
+  .th-btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Export row */
+  .th-export-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+  /* Dropzone */
+  .th-dropzone {
+    border: 2px dashed rgba(27,27,27,0.2);
+    border-radius: 10px; padding: 1.4rem;
+    text-align: center; cursor: pointer;
+    transition: border-color 150ms ease, background 150ms ease;
+  }
+
+  .th-dropzone:hover, .th-dropzone.drag-over {
+    border-color: var(--accent);
+    background: rgba(109,74,165,0.03);
+  }
+
+  .th-dropzone p { font-size: 0.9rem; color: var(--muted); margin: 0; }
+  .th-dropzone strong { color: var(--accent); }
+
+  .th-file-list { display: grid; gap: 0.4rem; }
+
+  .th-file-item {
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(109,74,165,0.06);
+    border-radius: 6px; padding: 0.4rem 0.75rem;
+    font-size: 0.84rem;
+  }
+
+  .th-file-name { font-family: "Space Grotesk", sans-serif; font-weight: 500; }
+
+  .th-file-remove {
+    background: none; border: none; color: var(--muted);
+    cursor: pointer; font-size: 1rem; padding: 0 0.15rem; line-height: 1;
+  }
+
+  .th-file-remove:hover { color: #b91c1c; }
+
+  /* Progress */
+  .th-progress-track {
+    width: 100%; height: 6px;
+    background: rgba(27,27,27,0.1);
+    border-radius: 3px; overflow: hidden;
+  }
+
+  .th-progress-fill {
+    height: 100%; background: var(--accent);
+    border-radius: 3px; width: 0%;
+    transition: width 300ms ease;
+  }
+
+  .th-progress-label { font-size: 0.84rem; color: var(--muted); text-align: center; margin: 0; }
+
+  .th-stats {
+    display: flex; gap: 1.2rem;
+    font-size: 0.8rem; color: var(--muted);
+    font-family: "Space Grotesk", sans-serif;
+  }
+
+  .th-stat strong { color: var(--ink); }
+
+  /* Expandable tip */
+  .th-tip { }
+
+  .th-tip summary {
+    font-family: "Spectral", serif; font-size: 0.82rem;
+    color: var(--muted); cursor: pointer;
+    list-style: none; display: inline-flex;
+    align-items: center; gap: 0.3rem; user-select: none;
+  }
+
+  .th-tip summary::-webkit-details-marker { display: none; }
+  .th-tip summary::before { content: "▸"; font-size: 0.65rem; transition: transform 150ms ease; }
+  .th-tip[open] summary::before { transform: rotate(90deg); }
+
+  .th-tip-body {
+    margin-top: 0.75rem; padding: 0.9rem 1.1rem;
+    background: var(--bg); border: 1px solid rgba(27,27,27,0.08);
+    border-radius: 10px; font-size: 0.86rem; line-height: 1.6; color: var(--ink);
+  }
+
+  .th-tip-body p { margin: 0 0 0.65rem; }
+  .th-tip-body p:last-child { margin: 0; }
+  .th-tip-body ol { margin: 0 0 0.65rem; padding-left: 1.4rem; }
+  .th-tip-body li { margin-bottom: 0.3rem; }
+  .th-tip-body code {
+    font-family: "SF Mono","Fira Code","Menlo",monospace;
+    font-size: 0.8rem; background: white;
+    border: 1px solid rgba(27,27,27,0.1);
+    border-radius: 4px; padding: 1px 5px;
+  }
+
+  .th-back {
+    font-family: "Space Grotesk", sans-serif; font-size: 0.85rem;
+    color: var(--muted); background: none; border: none;
+    border-bottom: 1px solid rgba(107,101,93,0.3);
+    padding: 0 0 1px; margin-bottom: 1rem;
+    cursor: pointer; display: inline-block;
+    transition: color 150ms ease, border-color 150ms ease;
+  }
+
+  .th-back:hover { color: var(--accent); border-color: var(--accent); }
+  .th-back.hidden { display: none; }
+</style>
+
+<button class="th-back hidden" id="back-btn">← Start over</button>
+<h1>Takeout Hydrator</h1>
+<p class="th-subtitle">Enrich your Google Maps saved places with Places API metadata.</p>
+
+<div class="th-steps">
+
+  <!-- Step 1: Tier -->
+  <div class="th-step" id="step-1">
+    <div class="th-step-header">
+      <span class="th-step-num" id="num-1">1</span>
+      <span class="th-step-title">Data Tier</span>
+    </div>
+    <div class="th-step-body" id="body-1">
+      <p class="th-hint">Controls which fields are fetched and billed. All tiers are covered by Google's $200/month free credit for typical personal datasets.</p>
+      <div class="th-tiers">
+        <button class="th-tier selected" data-tier="essentials">
+          <div class="th-tier-name">Essentials</div>
+          <div class="th-tier-desc">Name, address, coordinates, type, Maps URL — the GIS basics. Lowest cost.</div>
+        </button>
+        <button class="th-tier" data-tier="pro">
+          <div class="th-tier-name">Pro</div>
+          <div class="th-tier-desc">+ Rating, review count, price level, business status.</div>
+        </button>
+        <button class="th-tier" data-tier="enterprise">
+          <div class="th-tier-name">Enterprise</div>
+          <div class="th-tier-desc">+ Website, phone number, editorial summary. Highest cost per record.</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2: API Key -->
+  <div class="th-step" id="step-2">
+    <div class="th-step-header">
+      <span class="th-step-num" id="num-2">2</span>
+      <span class="th-step-title">Google Cloud API Key</span>
+    </div>
+    <div class="th-step-body" id="body-2">
+      <details class="th-tip">
+        <summary>Don't have a key?</summary>
+        <div class="th-tip-body">
+          <p>Go to <strong>console.cloud.google.com</strong>, create or select a project, then:</p>
+          <ol>
+            <li>Go to <strong>APIs &amp; Services → Enable APIs</strong> and enable <strong>Places API (New)</strong> — not the legacy Places API</li>
+            <li>Go to <strong>Credentials → Create Credentials → API key</strong></li>
+            <li>Copy the key and paste it below</li>
+          </ol>
+          <p>Google provides a <strong>$200/month credit</strong>. At Essentials tier (~$0.017/record), a few hundred places will cost pennies. A billing-enabled project is required regardless.</p>
+        </div>
+      </details>
+      <details class="th-tip">
+        <summary>How to restrict your key</summary>
+        <div class="th-tip-body">
+          <p>Your key is used directly in the browser and will appear in network requests. To limit exposure: in Google Cloud Console, go to <strong>Credentials → your key → API restrictions</strong> and restrict it to <strong>Places API (New)</strong> only. Under <strong>Application restrictions</strong> you can also limit it to the HTTP referrer <code>zaleary.tv/*</code>.</p>
+        </div>
+      </details>
+      <div>
+        <label class="th-label" for="api-key-input">API Key</label>
+        <input class="th-input" type="password" id="api-key-input" placeholder="AIza…" autocomplete="off" spellcheck="false" />
+      </div>
+      <div id="preflight-status"></div>
+      <button class="th-btn" id="validate-btn">Validate Key</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Upload -->
+  <div class="th-step locked" id="step-3">
+    <div class="th-step-header">
+      <span class="th-step-num" id="num-3">3</span>
+      <span class="th-step-title">Upload Takeout CSV Files</span>
+    </div>
+    <div class="th-step-body" id="body-3">
+      <details class="th-tip">
+        <summary>How to export your saved places</summary>
+        <div class="th-tip-body">
+          <ol>
+            <li>Go to <strong>takeout.google.com</strong></li>
+            <li>Click <strong>Deselect all</strong>, then check <strong>Saved</strong> — not Maps or Maps (your places), those are different exports</li>
+            <li>Export and download the archive</li>
+            <li>Open it and navigate to <code>Takeout/Saved/</code></li>
+            <li>Upload the CSV files below — each saved list (Favorites, Want to go, etc.) is its own file</li>
+          </ol>
+        </div>
+      </details>
+      <div id="drop-zone" class="th-dropzone">
+        <input type="file" id="file-input" accept=".csv" multiple style="display:none" />
+        <p>Drop CSVs here or <strong>click to browse</strong></p>
+      </div>
+      <div class="th-file-list" id="file-list"></div>
+      <button class="th-btn" id="parse-btn" disabled>Parse Files</button>
+    </div>
+  </div>
+
+  <!-- Step 4: Enrich -->
+  <div class="th-step locked" id="step-4">
+    <div class="th-step-header">
+      <span class="th-step-num" id="num-4">4</span>
+      <span class="th-step-title">Enrich Places</span>
+    </div>
+    <div class="th-step-body" id="body-4">
+      <p class="th-hint" id="enrich-ready-label"></p>
+      <div id="progress-section" style="display:none; display:grid; gap:0.5rem;">
+        <div class="th-progress-track"><div class="th-progress-fill" id="progress-fill"></div></div>
+        <p class="th-progress-label" id="progress-label">Starting…</p>
+        <div class="th-stats">
+          <span class="th-stat">Direct: <strong id="stat-direct">0</strong></span>
+          <span class="th-stat">Search: <strong id="stat-search">0</strong></span>
+          <span class="th-stat">Fallback: <strong id="stat-fallback">0</strong></span>
+        </div>
+      </div>
+      <div id="enrich-error" class="th-error" style="display:none"></div>
+      <button class="th-btn" id="enrich-btn">Enrich Places</button>
+    </div>
+  </div>
+
+  <!-- Step 5: Export -->
+  <div class="th-step locked" id="step-5">
+    <div class="th-step-header">
+      <span class="th-step-num" id="num-5">5</span>
+      <span class="th-step-title">Export</span>
+    </div>
+    <div class="th-step-body" id="body-5">
+      <p class="th-hint" id="export-summary"></p>
+      <div class="th-export-row">
+        <button class="th-btn" id="export-csv-btn">Download CSV</button>
+        <button class="th-btn" id="export-geojson-btn">Download GeoJSON</button>
+      </div>
+      <button class="th-btn-ghost" id="reset-btn">Start over</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Constants ────────────────────────────────────────────────────────────────
+
+const PLACES_V1 = 'https://places.googleapis.com/v1';
+const LEGACY_DETAILS_URL = 'https://maps.googleapis.com/maps/api/place/details/json';
+const PREFLIGHT_ID = 'ChIJN1t_tDeuEmsRUsoyG83frY4'; // Sydney Opera House
+
+const TIER_MASKS = {
+  essentials: 'id,displayName,formattedAddress,location,types,googleMapsUri',
+  pro: 'id,displayName,formattedAddress,location,types,googleMapsUri,rating,userRatingCount,priceLevel,businessStatus',
+  enterprise: 'id,displayName,formattedAddress,location,types,googleMapsUri,rating,userRatingCount,priceLevel,businessStatus,websiteUri,nationalPhoneNumber,editorialSummary',
+};
+
+const PRICE_MAP = {
+  PRICE_LEVEL_FREE: 'Free', PRICE_LEVEL_INEXPENSIVE: '$',
+  PRICE_LEVEL_MODERATE: '$$', PRICE_LEVEL_EXPENSIVE: '$$$',
+  PRICE_LEVEL_VERY_EXPENSIVE: '$$$$',
+};
+
+const CATEGORY_MAP = {
+  restaurant:'Restaurant', fast_food_restaurant:'Restaurant', cafe:'Restaurant',
+  coffee_shop:'Restaurant', pizza_restaurant:'Restaurant', chinese_restaurant:'Restaurant',
+  japanese_restaurant:'Restaurant', sushi_restaurant:'Restaurant', thai_restaurant:'Restaurant',
+  indian_restaurant:'Restaurant', mexican_restaurant:'Restaurant', italian_restaurant:'Restaurant',
+  french_restaurant:'Restaurant', seafood_restaurant:'Restaurant', steak_house:'Restaurant',
+  bakery:'Restaurant', dessert_restaurant:'Restaurant', ice_cream_shop:'Restaurant',
+  food_court:'Restaurant', sandwich_shop:'Restaurant', brunch_restaurant:'Restaurant',
+  ramen_restaurant:'Restaurant', breakfast_restaurant:'Restaurant',
+  bar:'Bar', night_club:'Bar', pub:'Bar', wine_bar:'Bar', cocktail_bar:'Bar',
+  sports_bar:'Bar', brewery:'Bar', bar_and_grill:'Bar',
+  hotel:'Hotel', lodging:'Hotel', motel:'Hotel', bed_and_breakfast:'Hotel',
+  hostel:'Hotel', resort_hotel:'Hotel', extended_stay_hotel:'Hotel',
+  campground:'Hotel', rv_park:'Hotel',
+  store:'Shop', shopping_mall:'Shop', clothing_store:'Shop', shoe_store:'Shop',
+  grocery_store:'Shop', supermarket:'Shop', convenience_store:'Shop',
+  department_store:'Shop', book_store:'Shop', electronics_store:'Shop',
+  furniture_store:'Shop', hardware_store:'Shop', jewelry_store:'Shop',
+  gift_shop:'Shop', market:'Shop', pharmacy:'Shop', liquor_store:'Shop',
+  tourist_attraction:'Activity', museum:'Activity', art_gallery:'Activity',
+  amusement_park:'Activity', aquarium:'Activity', zoo:'Activity', park:'Activity',
+  national_park:'Activity', stadium:'Activity', theater:'Activity',
+  movie_theater:'Activity', bowling_alley:'Activity', gym:'Activity', spa:'Activity',
+  beach:'Activity', hiking_area:'Activity', ski_resort:'Activity', golf_course:'Activity',
+  sports_club:'Activity', performing_arts_theater:'Activity', cultural_center:'Activity',
+  historical_landmark:'Activity', botanical_garden:'Activity', observation_deck:'Activity',
+  scuba_diving_shop:'Activity', diving_center:'Activity',
+};
+
+const CSV_COLUMNS = [
+  'name','place_id','formattedAddress','lat','lng',
+  'primary_type','all_types','category',
+  'rating','user_ratings_total','price_level','business_status',
+  'website','formatted_phone_number','url','editorial_summary',
+  'source_list_name','ingestion_timestamp',
+];
+
+// ── State ─────────────────────────────────────────────────────────────────────
+
+let apiKey = '';
+let selectedTier = 'essentials';
+let pendingFiles = [];
+let rawPlaces = [];
+let enrichedPlaces = [];
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const $ = id => document.getElementById(id);
+
+// ── Rate limiter ──────────────────────────────────────────────────────────────
+
+class TokenBucket {
+  constructor(rate = 8, burst = 1) {
+    this.rate = rate; this.burst = burst;
+    this.tokens = burst; this.last = Date.now();
+  }
+  async acquire() {
+    while (true) {
+      const now = Date.now();
+      this.tokens = Math.min(this.burst, this.tokens + (now - this.last) / 1000 * this.rate);
+      this.last = now;
+      if (this.tokens >= 1) { this.tokens -= 1; return; }
+      await sleep((1 - this.tokens) / this.rate * 1000);
+    }
+  }
+}
+
+// ── URL parsing ───────────────────────────────────────────────────────────────
+
+function extractPlaceId(url) {
+  if (!url) return null;
+  let m = url.match(/!1s(ChIJ[A-Za-z0-9_-]+)/);
+  if (m) return m[1];
+  try {
+    const u = new URL(url);
+    const pid = u.searchParams.get('place_id');
+    if (pid) return pid;
+    const cid = u.searchParams.get('cid');
+    if (cid && /^\d+$/.test(cid)) return `cid:${cid}`;
+  } catch {}
+  m = url.match(/0x[0-9a-f]+:0x([0-9a-f]+)/i);
+  if (m) return `cid:${parseInt(m[1], 16)}`;
+  m = url.match(/(ChIJ[A-Za-z0-9_-]+)/);
+  if (m) return m[1];
+  return null;
+}
+
+function extractLatLng(url) {
+  if (!url) return [null, null];
+  const m = url.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+  if (m) return [parseFloat(m[1]), parseFloat(m[2])];
+  return [null, null];
+}
+
+// ── CSV parsing ───────────────────────────────────────────────────────────────
+
+function parseCSVRow(line) {
+  const cells = []; let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') {
+      if (inQ && line[i+1] === '"') { cur += '"'; i++; }
+      else inQ = !inQ;
+    } else if (c === ',' && !inQ) { cells.push(cur); cur = ''; }
+    else { cur += c; }
+  }
+  cells.push(cur);
+  return cells;
+}
+
+function parseCSVContent(text, filename) {
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const lines = text.split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const headers = parseCSVRow(lines[0]).map(h => h.trim().toLowerCase());
+  const iTitle = headers.findIndex(h => h === 'title' || h === 'name');
+  const iUrl   = headers.findIndex(h => h.includes('url'));
+  const iNote  = headers.findIndex(h => h === 'note' || h === 'comment');
+  const source = filename.replace(/\.csv$/i, '');
+  const ts = new Date().toISOString();
+  const places = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const vals = parseCSVRow(lines[i]);
+    const name = (vals[iTitle] || '').trim();
+    if (!name) continue;
+    const url  = iUrl  >= 0 ? (vals[iUrl]  || '').trim() : '';
+    const note = iNote >= 0 ? (vals[iNote] || '').trim() : '';
+    const [lat, lng] = extractLatLng(url || null);
+    places.push({
+      name, url: url || null, note: note || null,
+      source_list_name: source, ingestion_timestamp: ts,
+      extracted_place_id: extractPlaceId(url || null),
+      lat, lng,
+    });
+  }
+  return places;
+}
+
+function readFile(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = e => resolve(parseCSVContent(e.target.result, file.name));
+    r.onerror = reject;
+    r.readAsText(file);
+  });
+}
+
+// ── Places API ────────────────────────────────────────────────────────────────
+
+async function placesGet(placeId, fieldMask, retries = 5) {
+  const url = `${PLACES_V1}/places/${encodeURIComponent(placeId)}?key=${encodeURIComponent(apiKey)}`;
+  for (let a = 0; a < retries; a++) {
+    try {
+      const res = await fetch(url, { headers: { 'X-Goog-FieldMask': fieldMask } });
+      if (res.ok) return res.json();
+      if (res.status === 404) return null;
+      if (res.status === 429 || res.status === 503) { await sleep((2**a)*1000 + Math.random()*500); continue; }
+      return null;
+    } catch { await sleep(1000); }
+  }
+  return null;
+}
+
+async function placesSearchText(query, lat, lng, retries = 5) {
+  const url = `${PLACES_V1}/places:searchText?key=${encodeURIComponent(apiKey)}`;
+  const body = { textQuery: query };
+  if (lat != null && lng != null) {
+    body.locationBias = { circle: { center: { latitude: lat, longitude: lng }, radius: 5000 } };
+  }
+  for (let a = 0; a < retries; a++) {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Goog-FieldMask': 'places.id' },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.places?.[0]?.id || null;
+      }
+      if (res.status === 429 || res.status === 503) { await sleep((2**a)*1000 + Math.random()*500); continue; }
+      return null;
+    } catch { await sleep(1000); }
+  }
+  return null;
+}
+
+async function resolveCid(cidStr) {
+  const url = `${LEGACY_DETAILS_URL}?cid=${encodeURIComponent(cidStr)}&fields=place_id&key=${encodeURIComponent(apiKey)}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.status === 'OK' ? (data.result?.place_id || null) : null;
+  } catch { return null; }
+}
+
+async function preflight(key) {
+  const url = `${PLACES_V1}/places/${PREFLIGHT_ID}?key=${encodeURIComponent(key)}`;
+  try {
+    const res = await fetch(url, { headers: { 'X-Goog-FieldMask': 'id,displayName' } });
+    if (res.ok) return { ok: true };
+    const data = await res.json().catch(() => ({}));
+    const msg = (data.error?.message || '').toLowerCase();
+    if (res.status === 403) {
+      if (msg.includes('api key') || msg.includes('invalid') || msg.includes('not valid')) {
+        return { ok: false, message: 'Invalid or revoked API key.' };
+      }
+      return { ok: false, message: 'Places API (New) is not enabled. Go to Google Cloud Console → APIs & Services and enable it.' };
+    }
+    if (res.status === 429) return { ok: false, message: 'Quota exceeded. Wait a minute and try again.' };
+    return { ok: false, message: `Unexpected error (HTTP ${res.status}).` };
+  } catch (e) {
+    return { ok: false, message: `Network error: ${e.message}` };
+  }
+}
+
+// ── Data extraction ───────────────────────────────────────────────────────────
+
+function inferCategory(primaryType, types) {
+  if (primaryType && CATEGORY_MAP[primaryType]) return CATEGORY_MAP[primaryType];
+  for (const t of (types || [])) if (CATEGORY_MAP[t]) return CATEGORY_MAP[t];
+  return (primaryType || types?.length) ? 'Other' : null;
+}
+
+function placeToEnriched(place, raw) {
+  const types = place.types || [];
+  const primaryType = place.primaryType || types[0] || null;
+  const lat = place.location?.latitude ?? raw.lat;
+  const lng = place.location?.longitude ?? raw.lng;
+  let businessStatus = null;
+  if (place.businessStatus && place.businessStatus !== 'BUSINESS_STATUS_OPERATIONAL') {
+    businessStatus = place.businessStatus.replace('BUSINESS_STATUS_', '');
+  }
+  let editorial = place.editorialSummary?.text || null;
+  if (businessStatus === 'CLOSED_PERMANENTLY' && !editorial) editorial = 'Permanently closed';
+  return {
+    name: place.displayName?.text || raw.name,
+    place_id: place.id || null,
+    formattedAddress: place.formattedAddress || null,
+    lat, lng,
+    primary_type: primaryType,
+    all_types: types.length ? types.join('|') : null,
+    category: inferCategory(primaryType, types),
+    rating: place.rating ?? null,
+    user_ratings_total: place.userRatingCount ?? null,
+    price_level: PRICE_MAP[place.priceLevel] ?? null,
+    business_status: businessStatus,
+    website: place.websiteUri || null,
+    formatted_phone_number: place.nationalPhoneNumber || null,
+    url: place.googleMapsUri || raw.url,
+    editorial_summary: editorial,
+    source_list_name: raw.source_list_name,
+    ingestion_timestamp: raw.ingestion_timestamp,
+    null_geometry: lat == null || lng == null,
+  };
+}
+
+function makeFallback(raw) {
+  return {
+    name: raw.name, place_id: null, formattedAddress: null,
+    lat: raw.lat, lng: raw.lng,
+    primary_type: null, all_types: null, category: null,
+    rating: null, user_ratings_total: null, price_level: null,
+    business_status: null, website: null, formatted_phone_number: null,
+    url: raw.url, editorial_summary: null,
+    source_list_name: raw.source_list_name,
+    ingestion_timestamp: raw.ingestion_timestamp,
+    null_geometry: raw.lat == null || raw.lng == null,
+  };
+}
+
+// ── Deduplication ─────────────────────────────────────────────────────────────
+
+function deduplicate(places) {
+  const byId = new Map();
+  const noId = [];
+  for (const p of places) {
+    if (p.place_id) {
+      if (byId.has(p.place_id)) {
+        const ex = byId.get(p.place_id);
+        const sources = new Set([...ex.source_list_name.split(';'), ...p.source_list_name.split(';')]);
+        ex.source_list_name = [...sources].sort().join(';');
+      } else {
+        byId.set(p.place_id, { ...p });
+      }
+    } else {
+      noId.push(p);
+    }
+  }
+  return [...byId.values(), ...noId];
+}
+
+// ── Enrichment pipeline ───────────────────────────────────────────────────────
+
+async function processOne(raw, fieldMask, rateLimiter, cache) {
+  let targetId = raw.extracted_place_id;
+
+  if (targetId && cache.has(targetId)) {
+    return { enriched: placeToEnriched(cache.get(targetId), raw), type: 'direct' };
+  }
+
+  if (targetId?.startsWith('cid:')) {
+    await rateLimiter.acquire();
+    const resolved = await resolveCid(targetId.slice(4));
+    if (resolved) {
+      if (cache.has(resolved)) return { enriched: placeToEnriched(cache.get(resolved), raw), type: 'direct' };
+      await rateLimiter.acquire();
+      const place = await placesGet(resolved, fieldMask);
+      if (place) { cache.set(resolved, place); cache.set(targetId, place); return { enriched: placeToEnriched(place, raw), type: 'direct' }; }
+    }
+    targetId = null;
+  }
+
+  if (targetId) {
+    await rateLimiter.acquire();
+    const place = await placesGet(targetId, fieldMask);
+    if (place) { cache.set(targetId, place); return { enriched: placeToEnriched(place, raw), type: 'direct' }; }
+  }
+
+  await rateLimiter.acquire();
+  const foundId = await placesSearchText(raw.name, raw.lat, raw.lng);
+  if (foundId) {
+    if (cache.has(foundId)) return { enriched: placeToEnriched(cache.get(foundId), raw), type: 'search' };
+    await rateLimiter.acquire();
+    const place = await placesGet(foundId, fieldMask);
+    if (place) { cache.set(foundId, place); return { enriched: placeToEnriched(place, raw), type: 'search' }; }
+  }
+
+  return { enriched: makeFallback(raw), type: 'fallback' };
+}
+
+async function enrichAll(places, tier, onProgress) {
+  const fieldMask = TIER_MASKS[tier];
+  const rateLimiter = new TokenBucket(8, 1);
+  const cache = new Map();
+  const results = new Array(places.length);
+  let done = 0, direct = 0, search = 0, fallback = 0;
+  let idx = 0;
+
+  async function worker() {
+    while (idx < places.length) {
+      const i = idx++;
+      const { enriched, type } = await processOne(places[i], fieldMask, rateLimiter, cache);
+      results[i] = enriched;
+      done++;
+      if (type === 'direct') direct++;
+      else if (type === 'search') search++;
+      else fallback++;
+      onProgress(done, places.length, direct, search, fallback);
+    }
+  }
+
+  await Promise.all(Array.from({ length: 4 }, () => worker()));
+  return deduplicate(results);
+}
+
+// ── Export ────────────────────────────────────────────────────────────────────
+
+function csvEsc(v) {
+  if (v == null) return '';
+  const s = String(v);
+  return (s.includes(',') || s.includes('"') || s.includes('\n'))
+    ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+function toCSV(places) {
+  const rows = [CSV_COLUMNS.join(',')];
+  for (const p of places) rows.push(CSV_COLUMNS.map(c => csvEsc(p[c])).join(','));
+  return '﻿' + rows.join('\r\n');
+}
+
+function toGeoJSON(places) {
+  const features = places.map(p => ({
+    type: 'Feature',
+    geometry: p.lat != null && p.lng != null
+      ? { type: 'Point', coordinates: [p.lng, p.lat] } : null,
+    properties: Object.fromEntries(Object.entries(p).filter(([k]) => k !== 'lat' && k !== 'lng')),
+  }));
+  return JSON.stringify({ type: 'FeatureCollection', features }, null, 2);
+}
+
+function downloadBlob(content, filename, mime) {
+  const blob = new Blob([content], { type: mime });
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: filename });
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+// ── UI helpers ────────────────────────────────────────────────────────────────
+
+function unlock(n) { $(`step-${n}`).classList.remove('locked'); }
+
+function markDone(n) {
+  const num = $(`num-${n}`);
+  num.textContent = '✓'; num.classList.add('done');
+  $(`step-${n}`).classList.add('collapsed');
+}
+
+// ── Step 1 & 2: always visible from start ────────────────────────────────────
+
+document.querySelectorAll('.th-tier').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.th-tier').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedTier = btn.dataset.tier;
+  });
+});
+
+$('validate-btn').addEventListener('click', async () => {
+  const key = $('api-key-input').value.trim();
+  if (!key) return;
+  const btn = $('validate-btn');
+  const statusEl = $('preflight-status');
+  btn.disabled = true; btn.textContent = 'Validating…';
+  statusEl.className = ''; statusEl.textContent = '';
+
+  const result = await preflight(key);
+
+  if (result.ok) {
+    apiKey = key;
+    $('api-key-input').disabled = true;
+    btn.textContent = 'Validated';
+    statusEl.className = 'th-success';
+    statusEl.textContent = 'Places API (New) confirmed.';
+    document.querySelectorAll('.th-tier').forEach(b => b.disabled = true);
+    setTimeout(() => { markDone(1); markDone(2); unlock(3); }, 400);
+  } else {
+    statusEl.className = 'th-error'; statusEl.textContent = result.message;
+    btn.disabled = false; btn.textContent = 'Validate Key';
+  }
+});
+
+// ── Step 3: Upload ────────────────────────────────────────────────────────────
+
+function refreshFileList() {
+  const list = $('file-list');
+  list.innerHTML = '';
+  pendingFiles.forEach((f, i) => {
+    const item = document.createElement('div');
+    item.className = 'th-file-item';
+    item.innerHTML = `<span class="th-file-name">${f.name}</span><button class="th-file-remove" data-i="${i}" title="Remove">×</button>`;
+    list.appendChild(item);
+  });
+  list.querySelectorAll('.th-file-remove').forEach(btn => {
+    btn.addEventListener('click', () => {
+      pendingFiles.splice(parseInt(btn.dataset.i), 1);
+      refreshFileList();
+    });
+  });
+  $('parse-btn').disabled = pendingFiles.length === 0;
+}
+
+const dropZone = $('drop-zone');
+const fileInput = $('file-input');
+
+dropZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', () => {
+  pendingFiles = [...pendingFiles, ...Array.from(fileInput.files)];
+  fileInput.value = '';
+  refreshFileList();
+});
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('drag-over');
+  pendingFiles = [...pendingFiles, ...Array.from(e.dataTransfer.files).filter(f => f.name.endsWith('.csv'))];
+  refreshFileList();
+});
+
+$('parse-btn').addEventListener('click', async () => {
+  const btn = $('parse-btn');
+  btn.disabled = true; btn.textContent = 'Parsing…';
+  const all = [];
+  for (const f of pendingFiles) all.push(...await readFile(f));
+  rawPlaces = all;
+  markDone(3); unlock(4);
+  $('enrich-ready-label').textContent =
+    `${rawPlaces.length} place${rawPlaces.length !== 1 ? 's' : ''} found across ${pendingFiles.length} file${pendingFiles.length !== 1 ? 's' : ''}. Ready to enrich using the ${selectedTier} tier.`;
+});
+
+// ── Step 4: Enrich ────────────────────────────────────────────────────────────
+
+const progressSection = $('progress-section');
+const enrichError = $('enrich-error');
+
+$('enrich-btn').addEventListener('click', async () => {
+  const btn = $('enrich-btn');
+  btn.disabled = true; btn.textContent = 'Enriching…';
+  $('enrich-ready-label').style.display = 'none';
+  progressSection.style.display = 'grid';
+  enrichError.style.display = 'none';
+
+  try {
+    enrichedPlaces = await enrichAll(rawPlaces, selectedTier, (done, total, direct, search, fallback) => {
+      const pct = total > 0 ? done / total * 100 : 0;
+      $('progress-fill').style.width = `${pct}%`;
+      $('progress-label').textContent = `${done} of ${total}`;
+      $('stat-direct').textContent = direct;
+      $('stat-search').textContent = search;
+      $('stat-fallback').textContent = fallback;
+    });
+
+    $('progress-label').textContent = `Done — ${enrichedPlaces.length} place${enrichedPlaces.length !== 1 ? 's' : ''} enriched.`;
+    btn.style.display = 'none';
+    markDone(4); unlock(5);
+
+    const nullGeo = enrichedPlaces.filter(p => p.null_geometry).length;
+    let summary = `${enrichedPlaces.length} place${enrichedPlaces.length !== 1 ? 's' : ''} ready.`;
+    if (nullGeo) summary += ` ${nullGeo} without resolvable coordinates will appear with null geometry in GeoJSON.`;
+    $('export-summary').textContent = summary;
+    $('back-btn').classList.remove('hidden');
+  } catch (e) {
+    enrichError.textContent = `Enrichment failed: ${e.message}`;
+    enrichError.style.display = '';
+    btn.disabled = false; btn.textContent = 'Retry';
+  }
+});
+
+// ── Step 5: Export ────────────────────────────────────────────────────────────
+
+$('export-csv-btn').addEventListener('click', () => {
+  downloadBlob(toCSV(enrichedPlaces), 'takeout-enriched.csv', 'text/csv;charset=utf-8');
+});
+
+$('export-geojson-btn').addEventListener('click', () => {
+  downloadBlob(toGeoJSON(enrichedPlaces), 'takeout-enriched.geojson', 'application/geo+json');
+});
+
+$('reset-btn').addEventListener('click', () => location.reload());
+$('back-btn').addEventListener('click', () => location.reload());
+</script>
