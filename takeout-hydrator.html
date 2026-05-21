@@ -286,17 +286,17 @@ permalink: /takeout-hydrator/
         <div class="th-tip-body">
           <p>Go to <strong>console.cloud.google.com</strong>, create or select a project, then:</p>
           <ol>
-            <li>Go to <strong>APIs &amp; Services → Enable APIs</strong> and enable <strong>Places API (New)</strong> — not the legacy Places API</li>
+            <li>Go to <strong>APIs &amp; Services → Enable APIs</strong> and enable two APIs: <strong>Places API (New)</strong> and <strong>Generative Language API</strong></li>
             <li>Go to <strong>Credentials → Create Credentials → API key</strong></li>
             <li>Copy the key and paste it below</li>
           </ol>
-          <p>Google provides a <strong>$200/month credit</strong>. At Essentials tier (~$0.017/record), a few hundred places will cost pennies. A billing-enabled project is required regardless.</p>
+          <p>One key covers both enrichment and the AI analysis step. Google provides a <strong>$200/month credit</strong> — a personal dataset will stay well within free limits. A billing-enabled project is required regardless.</p>
         </div>
       </details>
       <details class="th-tip">
         <summary>How to restrict your key</summary>
         <div class="th-tip-body">
-          <p>Your key is used directly in the browser and will appear in network requests. To limit exposure: in Google Cloud Console, go to <strong>Credentials → your key → API restrictions</strong> and restrict it to <strong>Places API (New)</strong> only. Under <strong>Application restrictions</strong> you can also limit it to the HTTP referrer <code>zaleary.tv/*</code>.</p>
+          <p>Your key is used directly in the browser and will appear in network requests. To limit exposure: in Google Cloud Console, go to <strong>Credentials → your key → API restrictions</strong> and restrict it to <strong>Places API (New)</strong> and <strong>Generative Language API</strong>. Under <strong>Application restrictions</strong> you can also limit it to the HTTP referrer <code>zaleary.tv/*</code>.</p>
         </div>
       </details>
       <div>
@@ -389,12 +389,6 @@ const TIER_MASKS = {
   enterprise: 'id,displayName,formattedAddress,location,types,googleMapsUri,rating,userRatingCount,priceLevel,businessStatus,websiteUri,nationalPhoneNumber,editorialSummary',
 };
 
-const PRICE_MAP = {
-  PRICE_LEVEL_FREE: 'Free', PRICE_LEVEL_INEXPENSIVE: '$',
-  PRICE_LEVEL_MODERATE: '$$', PRICE_LEVEL_EXPENSIVE: '$$$',
-  PRICE_LEVEL_VERY_EXPENSIVE: '$$$$',
-};
-
 const CATEGORY_MAP = {
   restaurant:'Restaurant', fast_food_restaurant:'Restaurant', cafe:'Restaurant',
   coffee_shop:'Restaurant', pizza_restaurant:'Restaurant', chinese_restaurant:'Restaurant',
@@ -425,11 +419,11 @@ const CATEGORY_MAP = {
 };
 
 const CSV_COLUMNS = [
-  'name','place_id','formattedAddress','lat','lng',
-  'primary_type','all_types','category',
-  'rating','user_ratings_total','price_level','business_status',
-  'website','formatted_phone_number','url','editorial_summary',
-  'source_list_name','ingestion_timestamp',
+  'displayName','id','formattedAddress','latitude','longitude',
+  'primaryType','types','category',
+  'rating','userRatingCount','priceLevel','businessStatus',
+  'websiteUri','nationalPhoneNumber','googleMapsUri','editorialSummary',
+  'sourceList','ingestionTimestamp',
 ];
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -625,47 +619,45 @@ function inferCategory(primaryType, types) {
 function placeToEnriched(place, raw) {
   const types = place.types || [];
   const primaryType = place.primaryType || types[0] || null;
-  const lat = place.location?.latitude ?? raw.lat;
-  const lng = place.location?.longitude ?? raw.lng;
-  let businessStatus = null;
-  if (place.businessStatus && place.businessStatus !== 'BUSINESS_STATUS_OPERATIONAL') {
-    businessStatus = place.businessStatus.replace('BUSINESS_STATUS_', '');
+  const latitude = place.location?.latitude ?? raw.lat;
+  const longitude = place.location?.longitude ?? raw.lng;
+  let editorialSummary = place.editorialSummary?.text || null;
+  if (place.businessStatus === 'BUSINESS_STATUS_CLOSED_PERMANENTLY' && !editorialSummary) {
+    editorialSummary = 'Permanently closed';
   }
-  let editorial = place.editorialSummary?.text || null;
-  if (businessStatus === 'CLOSED_PERMANENTLY' && !editorial) editorial = 'Permanently closed';
   return {
-    name: place.displayName?.text || raw.name,
-    place_id: place.id || null,
+    displayName: place.displayName?.text || raw.name,
+    id: place.id || null,
     formattedAddress: place.formattedAddress || null,
-    lat, lng,
-    primary_type: primaryType,
-    all_types: types.length ? types.join('|') : null,
+    latitude, longitude,
+    primaryType,
+    types: types.length ? types.join('|') : null,
     category: inferCategory(primaryType, types),
     rating: place.rating ?? null,
-    user_ratings_total: place.userRatingCount ?? null,
-    price_level: PRICE_MAP[place.priceLevel] ?? null,
-    business_status: businessStatus,
-    website: place.websiteUri || null,
-    formatted_phone_number: place.nationalPhoneNumber || null,
-    url: place.googleMapsUri || raw.url,
-    editorial_summary: editorial,
-    source_list_name: raw.source_list_name,
-    ingestion_timestamp: raw.ingestion_timestamp,
-    null_geometry: lat == null || lng == null,
+    userRatingCount: place.userRatingCount ?? null,
+    priceLevel: place.priceLevel || null,
+    businessStatus: place.businessStatus || null,
+    websiteUri: place.websiteUri || null,
+    nationalPhoneNumber: place.nationalPhoneNumber || null,
+    googleMapsUri: place.googleMapsUri || raw.url,
+    editorialSummary,
+    sourceList: raw.source_list_name,
+    ingestionTimestamp: raw.ingestion_timestamp,
+    _hasGeometry: latitude != null && longitude != null,
   };
 }
 
 function makeFallback(raw) {
   return {
-    name: raw.name, place_id: null, formattedAddress: null,
-    lat: raw.lat, lng: raw.lng,
-    primary_type: null, all_types: null, category: null,
-    rating: null, user_ratings_total: null, price_level: null,
-    business_status: null, website: null, formatted_phone_number: null,
-    url: raw.url, editorial_summary: null,
-    source_list_name: raw.source_list_name,
-    ingestion_timestamp: raw.ingestion_timestamp,
-    null_geometry: raw.lat == null || raw.lng == null,
+    displayName: raw.name, id: null, formattedAddress: null,
+    latitude: raw.lat, longitude: raw.lng,
+    primaryType: null, types: null, category: null,
+    rating: null, userRatingCount: null, priceLevel: null,
+    businessStatus: null, websiteUri: null, nationalPhoneNumber: null,
+    googleMapsUri: raw.url, editorialSummary: null,
+    sourceList: raw.source_list_name,
+    ingestionTimestamp: raw.ingestion_timestamp,
+    _hasGeometry: raw.lat != null && raw.lng != null,
   };
 }
 
@@ -675,13 +667,13 @@ function deduplicate(places) {
   const byId = new Map();
   const noId = [];
   for (const p of places) {
-    if (p.place_id) {
-      if (byId.has(p.place_id)) {
-        const ex = byId.get(p.place_id);
-        const sources = new Set([...ex.source_list_name.split(';'), ...p.source_list_name.split(';')]);
-        ex.source_list_name = [...sources].sort().join(';');
+    if (p.id) {
+      if (byId.has(p.id)) {
+        const ex = byId.get(p.id);
+        const sources = new Set([...ex.sourceList.split(';'), ...p.sourceList.split(';')]);
+        ex.sourceList = [...sources].sort().join(';');
       } else {
-        byId.set(p.place_id, { ...p });
+        byId.set(p.id, { ...p });
       }
     } else {
       noId.push(p);
@@ -772,9 +764,13 @@ function toCSV(places) {
 function toGeoJSON(places) {
   const features = places.map(p => ({
     type: 'Feature',
-    geometry: p.lat != null && p.lng != null
-      ? { type: 'Point', coordinates: [p.lng, p.lat] } : null,
-    properties: Object.fromEntries(Object.entries(p).filter(([k]) => k !== 'lat' && k !== 'lng')),
+    geometry: p._hasGeometry
+      ? { type: 'Point', coordinates: [p.longitude, p.latitude] } : null,
+    properties: Object.fromEntries(
+      Object.entries(p)
+        .filter(([k]) => k !== 'latitude' && k !== 'longitude' && k !== '_hasGeometry')
+        .map(([k, v]) => [k, k === 'types' && v ? v.split('|') : v])
+    ),
   }));
   return JSON.stringify({ type: 'FeatureCollection', features }, null, 2);
 }
@@ -903,7 +899,7 @@ $('enrich-btn').addEventListener('click', async () => {
     btn.style.display = 'none';
     markDone(4); unlock(5);
 
-    const nullGeo = enrichedPlaces.filter(p => p.null_geometry).length;
+    const nullGeo = enrichedPlaces.filter(p => !p._hasGeometry).length;
     let summary = `${enrichedPlaces.length} place${enrichedPlaces.length !== 1 ? 's' : ''} ready.`;
     if (nullGeo) summary += ` ${nullGeo} without resolvable coordinates will appear with null geometry in GeoJSON.`;
     $('export-summary').textContent = summary;
