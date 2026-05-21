@@ -234,18 +234,7 @@ permalink: /goodlibby/
 <!-- Input view -->
 <div id="view-input">
   <h1>GoodLibby</h1>
-  <p class="gl-subtitle">Check your Goodreads to-read list against Libby.</p>
-
-  <details class="gl-tip">
-    <summary>Don't want to wait for Goodreads to export?</summary>
-    <div class="gl-tip-body">
-      <p>Take a list of books from anywhere and tell your favorite LLM to turn it into a CSV with three columns: <strong>Title</strong>, <strong>Author</strong>, and <strong>Bookshelves</strong>. Set Bookshelves to <strong>to-read</strong> for every row. Save it as a <strong>.csv</strong> file and upload it above.</p>
-      <p>Expected format:<code>Title,Author,Bookshelves
-Neuromancer,William Gibson,to-read
-The Left Hand of Darkness,Ursula K. Le Guin,to-read
-Dune,Frank Herbert,to-read</code></p>
-    </div>
-  </details>
+  <p class="gl-subtitle">Check your Goodreads to-read list, or any list of books, against Libby.</p>
 
   <div id="error-box" class="gl-error" hidden></div>
 
@@ -262,6 +251,17 @@ Dune,Frank Herbert,to-read</code></p>
     </div>
     <button class="gl-btn" id="check-btn">Check availability</button>
   </div>
+
+  <details class="gl-tip">
+    <summary>Don't have a Goodreads csv?</summary>
+    <div class="gl-tip-body">
+      <p>Take a list of books from anywhere and tell your favorite LLM to turn it into a CSV with three columns: <strong>Title</strong>, <strong>Author</strong>, and <strong>Bookshelves</strong>. Set Bookshelves to <strong>to-read</strong> for every row. Save it as a <strong>.csv</strong> file and upload it above.</p>
+      <p>Expected format:<code>Title,Author,Bookshelves
+Moby Dick,Herman Melville,to-read
+War and Peace,Leo Tolstoy,to-read
+Ulysses,James Joyce,to-read</code></p>
+    </div>
+  </details>
 </div>
 
 <!-- Results view -->
