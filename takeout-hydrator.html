@@ -139,9 +139,6 @@ permalink: /takeout-hydrator/
 
   .th-btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* Export row */
-  .th-export-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-
   /* Dropzone */
   .th-dropzone {
     border: 2px dashed rgba(27,27,27,0.2);
@@ -242,59 +239,6 @@ permalink: /takeout-hydrator/
   .th-back:hover { color: var(--accent); border-color: var(--accent); }
   .th-back.hidden { display: none; }
 
-  /* ── Step 6: Preference Profile ───────────────────────────────── */
-  .th-textarea {
-    width: 100%; min-height: 80px;
-    padding: 0.6rem 0.85rem;
-    border: 1px solid rgba(27,27,27,0.2); border-radius: 8px;
-    font-family: "Spectral", serif; font-size: 0.95rem;
-    background: white; color: var(--ink);
-    box-sizing: border-box; resize: vertical; line-height: 1.5;
-    transition: border-color 150ms ease;
-  }
-  .th-textarea:focus { outline: none; border-color: var(--accent); }
-  .th-textarea:disabled { background: var(--bg); }
-
-  .th-input-row { display: grid; gap: 0.5rem; margin-top: 0.75rem; }
-
-  .th-chat { display: grid; gap: 0.6rem; max-height: 420px; overflow-y: auto; padding: 0.1rem 0; }
-  .th-chat-msg {
-    padding: 0.8rem 1rem; border-radius: 10px;
-    font-size: 0.88rem; line-height: 1.6; white-space: pre-wrap;
-  }
-  .th-chat-model { background: var(--bg); border: 1px solid rgba(27,27,27,0.08); }
-  .th-chat-user {
-    background: rgba(109,74,165,0.07); border: 1px solid rgba(109,74,165,0.14);
-    margin-left: 2rem;
-  }
-
-  .th-summary-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 0.55rem;
-  }
-  .th-summary-card {
-    background: var(--bg); border: 1px solid rgba(27,27,27,0.07);
-    border-radius: 8px; padding: 0.55rem 0.8rem;
-  }
-  .th-summary-label {
-    font-family: "Space Grotesk", sans-serif; font-size: 0.62rem;
-    text-transform: uppercase; letter-spacing: 0.13em;
-    color: var(--muted); margin-bottom: 0.2rem;
-  }
-  .th-summary-value {
-    font-family: "Space Grotesk", sans-serif;
-    font-weight: 700; font-size: 0.88rem; color: var(--ink);
-  }
-
-  .th-schema {
-    font-family: "SF Mono","Fira Code","Menlo",monospace; font-size: 0.79rem;
-    background: var(--bg); border: 1px solid rgba(27,27,27,0.08);
-    border-radius: 10px; padding: 1.1rem 1.2rem; line-height: 1.72;
-    white-space: pre-wrap; color: var(--ink); word-break: break-word;
-  }
-
-  /* ── Dev bypass card ─────────────────────────────────────────────── */
-  .th-dev-card { border-style: dashed; }
-  .th-dev-num { background: #92400e; font-size: 0.58rem; letter-spacing: 0.03em; }
 </style>
 
 <button class="th-back hidden" id="back-btn">← Start over</button>
@@ -302,30 +246,6 @@ permalink: /takeout-hydrator/
 <p class="th-subtitle">Enrich your Google Maps saved places with Places API metadata.</p>
 
 <div class="th-steps">
-
-  <!-- DEV: Load existing enriched CSV -->
-  <div class="th-step th-dev-card" id="step-dev">
-    <div class="th-step-header">
-      <span class="th-step-num th-dev-num">DEV</span>
-      <span class="th-step-title">Load Existing Enriched CSV</span>
-    </div>
-    <div class="th-step-body" id="body-dev">
-      <p class="th-hint">Skip enrichment — load a CSV from a previous Takeout Hydrator run. Provide an API key only if you want to use the Gemini analysis in Step 6.</p>
-      <div id="dev-drop-zone" class="th-dropzone">
-        <input type="file" id="dev-file-input" accept=".csv" style="display:none" />
-        <p>Drop enriched CSV here or <strong>click to browse</strong></p>
-      </div>
-      <div id="dev-file-display" style="display:none" class="th-file-item">
-        <span class="th-file-name" id="dev-file-label"></span>
-      </div>
-      <div>
-        <label class="th-label" for="dev-api-key">Gemini API Key (optional)</label>
-        <input class="th-input" type="password" id="dev-api-key" placeholder="AIza… (for Step 6 only)" autocomplete="off" spellcheck="false" />
-      </div>
-      <div id="dev-status"></div>
-      <button class="th-btn" id="dev-load-btn" disabled>Load CSV</button>
-    </div>
-  </div>
 
   <!-- Step 1: Tier -->
   <div class="th-step" id="step-1">
@@ -364,17 +284,17 @@ permalink: /takeout-hydrator/
         <div class="th-tip-body">
           <p>Go to <strong>console.cloud.google.com</strong>, create or select a project, then:</p>
           <ol>
-            <li>Go to <strong>APIs &amp; Services → Enable APIs</strong> and enable two APIs: <strong>Places API (New)</strong> and <strong>Generative Language API</strong></li>
+            <li>Go to <strong>APIs &amp; Services → Enable APIs</strong> and enable <strong>Places API (New)</strong></li>
             <li>Go to <strong>Credentials → Create Credentials → API key</strong></li>
             <li>Copy the key and paste it below</li>
           </ol>
-          <p>One key covers both enrichment and the AI analysis step. Google provides a <strong>$200/month credit</strong> — a personal dataset will stay well within free limits. A billing-enabled project is required regardless.</p>
+          <p>Google provides a <strong>$200/month credit</strong> — a personal dataset will stay well within free limits. A billing-enabled project is required regardless.</p>
         </div>
       </details>
       <details class="th-tip">
         <summary>How to restrict your key</summary>
         <div class="th-tip-body">
-          <p>Your key is used directly in the browser and will appear in network requests. To limit exposure: in Google Cloud Console, go to <strong>Credentials → your key → API restrictions</strong> and restrict it to <strong>Places API (New)</strong> and <strong>Generative Language API</strong>. Under <strong>Application restrictions</strong> you can also limit it to the HTTP referrer <code>zaleary.tv/*</code>.</p>
+          <p>Your key is used directly in the browser and will appear in network requests. To limit exposure: in Google Cloud Console, go to <strong>Credentials → your key → API restrictions</strong> and restrict it to <strong>Places API (New)</strong>. Under <strong>Application restrictions</strong> you can also limit it to the HTTP referrer <code>zaleary.tv/*</code>.</p>
         </div>
       </details>
       <div>
@@ -444,48 +364,11 @@ permalink: /takeout-hydrator/
     </div>
     <div class="th-step-body" id="body-5">
       <p class="th-hint" id="export-summary"></p>
-      <div class="th-export-row">
-        <button class="th-btn" id="export-csv-btn">Download CSV</button>
-        <button class="th-btn" id="export-geojson-btn">Download GeoJSON</button>
-      </div>
+      <button class="th-btn" id="export-csv-btn">Download CSV</button>
       <button class="th-btn-ghost" id="reset-btn">Start over</button>
     </div>
   </div>
 
-
-  <!-- Step 6: Preference Profile -->
-  <div class="th-step locked" id="step-6">
-    <div class="th-step-header">
-      <span class="th-step-num" id="num-6">6</span>
-      <span class="th-step-title">Preference Profile</span>
-    </div>
-    <div class="th-step-body" id="body-6">
-      <div id="ph-start">
-        <p class="th-hint">Analyze your enriched places to extract patterns, then answer up to five targeted questions. The output is a portable preference schema for personalized travel recommendations.</p>
-        <button class="th-btn" id="analyze-btn">Analyze My Places</button>
-      </div>
-      <div id="ph-extracting" style="display:none">
-        <p class="th-hint" id="extract-status">Analyzing patterns…</p>
-      </div>
-      <div id="ph-summary" style="display:none">
-        <div id="extraction-summary"></div>
-        <button class="th-btn" id="start-interview-btn" style="margin-top:0.6rem">Start Interview</button>
-      </div>
-      <div id="ph-interview" style="display:none">
-        <div class="th-chat" id="interview-chat"></div>
-        <div id="interview-input-row" class="th-input-row" style="display:none">
-          <textarea class="th-textarea" id="interview-input" rows="3" placeholder="Type your answer…"></textarea>
-          <button class="th-btn" id="interview-submit">Submit answer</button>
-        </div>
-        <p id="interview-status" class="th-hint" style="margin-top:0.4rem"></p>
-      </div>
-      <div id="ph-schema" style="display:none">
-        <div class="th-schema" id="schema-output"></div>
-        <button class="th-btn-ghost" id="copy-schema-btn" style="margin-top:0.75rem">Copy to clipboard</button>
-      </div>
-      <div id="ph-error" class="th-error" style="display:none"></div>
-    </div>
-  </div>
 
 </div>
 
@@ -874,20 +757,6 @@ function toCSV(places) {
   return '﻿' + rows.join('\r\n');
 }
 
-function toGeoJSON(places) {
-  const features = places.map(p => ({
-    type: 'Feature',
-    geometry: p._hasGeometry
-      ? { type: 'Point', coordinates: [p.longitude, p.latitude] } : null,
-    properties: Object.fromEntries(
-      Object.entries(p)
-        .filter(([k]) => k !== 'latitude' && k !== 'longitude' && k !== '_hasGeometry')
-        .map(([k, v]) => [k, k === 'types' && v ? v.split('|') : v])
-    ),
-  }));
-  return JSON.stringify({ type: 'FeatureCollection', features }, null, 2);
-}
-
 function downloadBlob(content, filename, mime) {
   const blob = new Blob([content], { type: mime });
   const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: filename });
@@ -1010,12 +879,9 @@ $('enrich-btn').addEventListener('click', async () => {
 
     $('progress-label').textContent = `Done — ${enrichedPlaces.length} place${enrichedPlaces.length !== 1 ? 's' : ''} enriched.`;
     btn.style.display = 'none';
-    markDone(4); unlock(5); unlock(6);
+    markDone(4); unlock(5);
 
-    const nullGeo = enrichedPlaces.filter(p => !p._hasGeometry).length;
-    let summary = `${enrichedPlaces.length} place${enrichedPlaces.length !== 1 ? 's' : ''} ready.`;
-    if (nullGeo) summary += ` ${nullGeo} without resolvable coordinates will appear with null geometry in GeoJSON.`;
-    $('export-summary').textContent = summary;
+    $('export-summary').textContent = `${enrichedPlaces.length} place${enrichedPlaces.length !== 1 ? 's' : ''} ready.`;
     $('back-btn').classList.remove('hidden');
   } catch (e) {
     enrichError.textContent = `Enrichment failed: ${e.message}`;
@@ -1030,27 +896,9 @@ $('export-csv-btn').addEventListener('click', () => {
   downloadBlob(toCSV(enrichedPlaces), 'takeout-enriched.csv', 'text/csv;charset=utf-8');
 });
 
-$('export-geojson-btn').addEventListener('click', () => {
-  downloadBlob(toGeoJSON(enrichedPlaces), 'takeout-enriched.geojson', 'application/geo+json');
-});
-
 $('reset-btn').addEventListener('click', () => location.reload());
 $('back-btn').addEventListener('click', () => location.reload());
-
-// ── Gemini constants ──────────────────────────────────────────────────────────
-
-const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
-const GEMINI_MODEL = 'gemini-2.5-flash';
-
-// ── List classification ───────────────────────────────────────────────────────
-
-const LIST_PATTERNS = {
-  favorites: /\bfavou?r(?:ites?)?\b|\bstarred?\b|\bliked?\b|\bbookmarked?\b/i,
-  wtg:       /want\s*(to\s*)?(go|visit|try)|wish\s*list|to\s*visit|bucket/i,
-  visited:   /\b(visit(ed)?|been\s*there?|went|checked?\s*in)\b/i,
-};
-
-function classifySourceList(name) {
+</script>
   for (const [type, re] of Object.entries(LIST_PATTERNS)) if (re.test(name)) return type;
   return null;
 }
