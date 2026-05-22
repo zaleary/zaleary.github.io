@@ -291,6 +291,10 @@ permalink: /takeout-hydrator/
     border-radius: 10px; padding: 1.1rem 1.2rem; line-height: 1.72;
     white-space: pre-wrap; color: var(--ink); word-break: break-word;
   }
+
+  /* ── Dev bypass card ─────────────────────────────────────────────── */
+  .th-dev-card { border-style: dashed; }
+  .th-dev-num { background: #92400e; font-size: 0.58rem; letter-spacing: 0.03em; }
 </style>
 
 <button class="th-back hidden" id="back-btn">← Start over</button>
@@ -298,6 +302,30 @@ permalink: /takeout-hydrator/
 <p class="th-subtitle">Enrich your Google Maps saved places with Places API metadata.</p>
 
 <div class="th-steps">
+
+  <!-- DEV: Load existing enriched CSV -->
+  <div class="th-step th-dev-card" id="step-dev">
+    <div class="th-step-header">
+      <span class="th-step-num th-dev-num">DEV</span>
+      <span class="th-step-title">Load Existing Enriched CSV</span>
+    </div>
+    <div class="th-step-body" id="body-dev">
+      <p class="th-hint">Skip enrichment — load a CSV from a previous Takeout Hydrator run. Provide an API key only if you want to use the Gemini analysis in Step 6.</p>
+      <div id="dev-drop-zone" class="th-dropzone">
+        <input type="file" id="dev-file-input" accept=".csv" style="display:none" />
+        <p>Drop enriched CSV here or <strong>click to browse</strong></p>
+      </div>
+      <div id="dev-file-display" style="display:none" class="th-file-item">
+        <span class="th-file-name" id="dev-file-label"></span>
+      </div>
+      <div>
+        <label class="th-label" for="dev-api-key">Gemini API Key (optional)</label>
+        <input class="th-input" type="password" id="dev-api-key" placeholder="AIza… (for Step 6 only)" autocomplete="off" spellcheck="false" />
+      </div>
+      <div id="dev-status"></div>
+      <button class="th-btn" id="dev-load-btn" disabled>Load CSV</button>
+    </div>
+  </div>
 
   <!-- Step 1: Tier -->
   <div class="th-step" id="step-1">
@@ -1428,5 +1456,104 @@ $('copy-schema-btn').addEventListener('click', () => {
     $('copy-schema-btn').textContent = 'Copied!';
     setTimeout(() => { $('copy-schema-btn').textContent = 'Copy to clipboard'; }, 2000);
   });
+});
+
+// ── DEV: Load existing enriched CSV ──────────────────────────────────────────
+
+function parseEnrichedCSV(text) {
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const lines = text.split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const headers = parseCSVRow(lines[0]).map(h => h.trim().toLowerCase());
+  const toFloat = s => { const n = parseFloat(s); return isNaN(n) ? null : n; };
+  const toInt   = s => { const n = parseInt(s, 10); return isNaN(n) ? null : n; };
+  const get = (vals, name) => { const i = headers.indexOf(name); return i >= 0 ? (vals[i] || '').trim() : ''; };
+
+  const places = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const vals = parseCSVRow(lines[i]);
+    const lat = toFloat(get(vals, 'latitude'));
+    const lng = toFloat(get(vals, 'longitude'));
+    places.push({
+      displayName:         get(vals, 'displayname') || null,
+      id:                  get(vals, 'id') || null,
+      formattedAddress:    get(vals, 'formattedaddress') || null,
+      latitude: lat, longitude: lng,
+      primaryType:         get(vals, 'primarytype') || null,
+      types:               get(vals, 'types') || null,
+      category:            get(vals, 'category') || null,
+      rating:              toFloat(get(vals, 'rating')),
+      userRatingCount:     toInt(get(vals, 'userratingcount')),
+      priceLevel:          get(vals, 'pricelevel') || null,
+      businessStatus:      get(vals, 'businessstatus') || null,
+      websiteUri:          get(vals, 'websiteuri') || null,
+      nationalPhoneNumber: get(vals, 'nationalphonenumber') || null,
+      googleMapsUri:       get(vals, 'googlemapsuri') || null,
+      editorialSummary:    get(vals, 'editorialsummary') || null,
+      sourceList:          get(vals, 'sourcelist') || '',
+      ingestionTimestamp:  get(vals, 'ingestiontimestamp') || '',
+      _hasGeometry: lat != null && lng != null,
+    });
+  }
+  return places;
+}
+
+let devFileObj = null;
+
+const devDropZone = $('dev-drop-zone');
+const devFileInput = $('dev-file-input');
+
+devDropZone.addEventListener('click', () => devFileInput.click());
+devDropZone.addEventListener('dragover', e => { e.preventDefault(); devDropZone.classList.add('drag-over'); });
+devDropZone.addEventListener('dragleave', () => devDropZone.classList.remove('drag-over'));
+devDropZone.addEventListener('drop', e => {
+  e.preventDefault(); devDropZone.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f && f.name.endsWith('.csv')) setDevFile(f);
+});
+devFileInput.addEventListener('change', () => {
+  if (devFileInput.files[0]) setDevFile(devFileInput.files[0]);
+  devFileInput.value = '';
+});
+
+function setDevFile(f) {
+  devFileObj = f;
+  $('dev-file-display').style.display = '';
+  $('dev-file-label').textContent = f.name;
+  $('dev-load-btn').disabled = false;
+  $('dev-status').textContent = '';
+  $('dev-status').className = '';
+}
+
+$('dev-load-btn').addEventListener('click', async () => {
+  if (!devFileObj) return;
+  const btn = $('dev-load-btn');
+  btn.disabled = true; btn.textContent = 'Loading…';
+  const statusEl = $('dev-status');
+  try {
+    const text = await devFileObj.text();
+    const places = parseEnrichedCSV(text);
+    if (!places.length) throw new Error('No rows found. Make sure this is a Takeout Hydrator enriched CSV.');
+    enrichedPlaces = places;
+
+    const key = $('dev-api-key').value.trim();
+    if (key) apiKey = key;
+
+    [2, 3, 4].forEach(n => unlock(n));
+    [1, 2, 3, 4].forEach(n => markDone(n));
+    unlock(5); unlock(6);
+    $('step-dev').classList.add('collapsed');
+    $('back-btn').classList.remove('hidden');
+
+    const nullGeo = enrichedPlaces.filter(p => !p._hasGeometry).length;
+    let summary = `${enrichedPlaces.length} place${enrichedPlaces.length !== 1 ? 's' : ''} loaded from CSV.`;
+    if (nullGeo) summary += ` ${nullGeo} without coordinates will appear with null geometry in GeoJSON.`;
+    $('export-summary').textContent = summary;
+  } catch (e) {
+    statusEl.className = 'th-error';
+    statusEl.textContent = e.message;
+    btn.disabled = false; btn.textContent = 'Load CSV';
+  }
 });
 </script>
