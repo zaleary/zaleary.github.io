@@ -241,6 +241,56 @@ permalink: /takeout-hydrator/
 
   .th-back:hover { color: var(--accent); border-color: var(--accent); }
   .th-back.hidden { display: none; }
+
+  /* ── Step 6: Preference Profile ───────────────────────────────── */
+  .th-textarea {
+    width: 100%; min-height: 80px;
+    padding: 0.6rem 0.85rem;
+    border: 1px solid rgba(27,27,27,0.2); border-radius: 8px;
+    font-family: "Spectral", serif; font-size: 0.95rem;
+    background: white; color: var(--ink);
+    box-sizing: border-box; resize: vertical; line-height: 1.5;
+    transition: border-color 150ms ease;
+  }
+  .th-textarea:focus { outline: none; border-color: var(--accent); }
+  .th-textarea:disabled { background: var(--bg); }
+
+  .th-input-row { display: grid; gap: 0.5rem; margin-top: 0.75rem; }
+
+  .th-chat { display: grid; gap: 0.6rem; max-height: 420px; overflow-y: auto; padding: 0.1rem 0; }
+  .th-chat-msg {
+    padding: 0.8rem 1rem; border-radius: 10px;
+    font-size: 0.88rem; line-height: 1.6; white-space: pre-wrap;
+  }
+  .th-chat-model { background: var(--bg); border: 1px solid rgba(27,27,27,0.08); }
+  .th-chat-user {
+    background: rgba(109,74,165,0.07); border: 1px solid rgba(109,74,165,0.14);
+    margin-left: 2rem;
+  }
+
+  .th-summary-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 0.55rem;
+  }
+  .th-summary-card {
+    background: var(--bg); border: 1px solid rgba(27,27,27,0.07);
+    border-radius: 8px; padding: 0.55rem 0.8rem;
+  }
+  .th-summary-label {
+    font-family: "Space Grotesk", sans-serif; font-size: 0.62rem;
+    text-transform: uppercase; letter-spacing: 0.13em;
+    color: var(--muted); margin-bottom: 0.2rem;
+  }
+  .th-summary-value {
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 700; font-size: 0.88rem; color: var(--ink);
+  }
+
+  .th-schema {
+    font-family: "SF Mono","Fira Code","Menlo",monospace; font-size: 0.79rem;
+    background: var(--bg); border: 1px solid rgba(27,27,27,0.08);
+    border-radius: 10px; padding: 1.1rem 1.2rem; line-height: 1.72;
+    white-space: pre-wrap; color: var(--ink); word-break: break-word;
+  }
 </style>
 
 <button class="th-back hidden" id="back-btn">← Start over</button>
@@ -371,6 +421,41 @@ permalink: /takeout-hydrator/
         <button class="th-btn" id="export-geojson-btn">Download GeoJSON</button>
       </div>
       <button class="th-btn-ghost" id="reset-btn">Start over</button>
+    </div>
+  </div>
+
+
+  <!-- Step 6: Preference Profile -->
+  <div class="th-step locked" id="step-6">
+    <div class="th-step-header">
+      <span class="th-step-num" id="num-6">6</span>
+      <span class="th-step-title">Preference Profile</span>
+    </div>
+    <div class="th-step-body" id="body-6">
+      <div id="ph-start">
+        <p class="th-hint">Analyze your enriched places to extract patterns, then answer up to five targeted questions. The output is a portable preference schema for personalized travel recommendations.</p>
+        <button class="th-btn" id="analyze-btn">Analyze My Places</button>
+      </div>
+      <div id="ph-extracting" style="display:none">
+        <p class="th-hint" id="extract-status">Analyzing patterns…</p>
+      </div>
+      <div id="ph-summary" style="display:none">
+        <div id="extraction-summary"></div>
+        <button class="th-btn" id="start-interview-btn" style="margin-top:0.6rem">Start Interview</button>
+      </div>
+      <div id="ph-interview" style="display:none">
+        <div class="th-chat" id="interview-chat"></div>
+        <div id="interview-input-row" class="th-input-row" style="display:none">
+          <textarea class="th-textarea" id="interview-input" rows="3" placeholder="Type your answer…"></textarea>
+          <button class="th-btn" id="interview-submit">Submit answer</button>
+        </div>
+        <p id="interview-status" class="th-hint" style="margin-top:0.4rem"></p>
+      </div>
+      <div id="ph-schema" style="display:none">
+        <div class="th-schema" id="schema-output"></div>
+        <button class="th-btn-ghost" id="copy-schema-btn" style="margin-top:0.75rem">Copy to clipboard</button>
+      </div>
+      <div id="ph-error" class="th-error" style="display:none"></div>
     </div>
   </div>
 
@@ -897,7 +982,7 @@ $('enrich-btn').addEventListener('click', async () => {
 
     $('progress-label').textContent = `Done — ${enrichedPlaces.length} place${enrichedPlaces.length !== 1 ? 's' : ''} enriched.`;
     btn.style.display = 'none';
-    markDone(4); unlock(5);
+    markDone(4); unlock(5); unlock(6);
 
     const nullGeo = enrichedPlaces.filter(p => !p._hasGeometry).length;
     let summary = `${enrichedPlaces.length} place${enrichedPlaces.length !== 1 ? 's' : ''} ready.`;
@@ -923,4 +1008,425 @@ $('export-geojson-btn').addEventListener('click', () => {
 
 $('reset-btn').addEventListener('click', () => location.reload());
 $('back-btn').addEventListener('click', () => location.reload());
+
+// ── Gemini constants ──────────────────────────────────────────────────────────
+
+const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
+const GEMINI_MODEL = 'gemini-2.0-flash';
+
+// ── List classification ───────────────────────────────────────────────────────
+
+const LIST_PATTERNS = {
+  favorites: /\b(favor|favour|starred?|liked?|bookmarked?)\b/i,
+  wtg:       /want\s*(to\s*)?(go|visit|try)|wish\s*list|to\s*visit|bucket/i,
+  visited:   /\b(visit(ed)?|been\s*there?|went|checked?\s*in)\b/i,
+};
+
+function classifySourceList(name) {
+  for (const [type, re] of Object.entries(LIST_PATTERNS)) if (re.test(name)) return type;
+  return null;
+}
+
+function classifyPlace(p) {
+  const lists = p.sourceList.split(';').map(s => s.trim());
+  return {
+    isFavorite: lists.some(l => classifySourceList(l) === 'favorites'),
+    isWtg:      lists.some(l => classifySourceList(l) === 'wtg'),
+    isVisited:  lists.some(l => classifySourceList(l) === 'visited'),
+  };
+}
+
+// ── Stats helpers ─────────────────────────────────────────────────────────────
+
+function median(arr) {
+  if (!arr.length) return 0;
+  const s = [...arr].sort((a,b) => a-b);
+  return s.length % 2 ? s[Math.floor(s.length/2)] : (s[s.length/2-1]+s[s.length/2])/2;
+}
+
+function mode(arr) {
+  if (!arr.length) return null;
+  const f = {}; for (const v of arr) f[v] = (f[v]||0)+1;
+  return Object.entries(f).sort((a,b) => b[1]-a[1])[0]?.[0] ?? null;
+}
+
+// ── Atmosphere lexicon ────────────────────────────────────────────────────────
+
+const ATMO_LEXICON = {
+  intimate: ['intimate','cozy','cosy','quaint','charming','warm','tucked'],
+  lively:   ['lively','vibrant','bustling','buzzing','trendy','electric','popular'],
+  upscale:  ['upscale','sophisticated','elegant','refined','luxurious','chic'],
+  casual:   ['casual','relaxed','laid-back','unpretentious','neighborhood'],
+  outdoor:  ['outdoor','scenic','open-air','alfresco','waterfront','garden'],
+};
+
+// ── Scaffold types (WTG decomposition) ───────────────────────────────────────
+
+const SCAFFOLD_TYPES = new Set([
+  'park','national_park','tourist_attraction','hiking_area','beach',
+  'botanical_garden','observation_deck','natural_feature','locality',
+  'neighborhood','point_of_interest','establishment','route',
+]);
+
+// ── Extraction ────────────────────────────────────────────────────────────────
+
+function conversionThreshold(places) {
+  const counts = {};
+  for (const p of places) counts[p.primaryType||'?'] = (counts[p.primaryType||'?']||0)+1;
+  const sorted = Object.values(counts).sort((a,b) => a-b);
+  const p20 = sorted[Math.floor(sorted.length * 0.2)] || 1;
+  return Math.max(3, Math.min(p20, 10));
+}
+
+function assignQuadrants(convMap, threshold) {
+  const eligible = Object.entries(convMap).filter(([,v]) => v.total >= threshold);
+  if (!eligible.length) return convMap;
+  const mT = median(eligible.map(([,v]) => v.total));
+  const mR = median(eligible.map(([,v]) => v.conversionRate));
+  const result = {};
+  for (const [type, v] of Object.entries(convMap)) {
+    if (v.total < threshold) { result[type] = v; continue; }
+    const hV = v.total > mT, hR = v.conversionRate > mR;
+    result[type] = { ...v, quadrant: hV&&hR?'conviction': !hV&&hR?'niche_passion': hV&&!hR?'churn':'incidental' };
+  }
+  return result;
+}
+
+function computeAtmosphereProxy(places) {
+  const withEd = places.filter(p => p.editorialSummary && p.editorialSummary.length > 10);
+  const coverage = withEd.length / Math.max(1, places.length);
+  const avgLen = withEd.length ? withEd.reduce((s,p) => s+p.editorialSummary.split(' ').length, 0)/withEd.length : 0;
+  const scores = {};
+  for (const [dim, words] of Object.entries(ATMO_LEXICON)) {
+    const hits = withEd.filter(p => words.some(w => p.editorialSummary.toLowerCase().includes(w))).length;
+    scores[dim] = withEd.length ? hits/withEd.length : 0;
+  }
+  const trustScore = Math.min(1, coverage * Math.min(1, avgLen/30));
+  return { scores, trustScore, coverage, sampleSize: withEd.length };
+}
+
+function computeWalkabilityProxy(places) {
+  const withC = places.filter(p => p._hasGeometry);
+  const coverage = withC.length / Math.max(1, places.length);
+  if (withC.length < 3) return { score: null, trustScore: coverage*0.3, clusterCount:0, typeDiversity:0 };
+  const grid = {};
+  for (const p of withC) {
+    const cell = `${(p.latitude*100).toFixed(0)},${(p.longitude*100).toFixed(0)}`;
+    (grid[cell] = grid[cell]||[]).push(p);
+  }
+  const cellSizes = Object.values(grid).map(c => c.length);
+  const clusterCount = cellSizes.filter(s => s >= 2).length;
+  const clusteredCats = new Set(Object.values(grid).filter(c=>c.length>=2).flat().map(p=>p.category||'?'));
+  const clusterScore = Math.min(1, clusterCount/Math.max(1,withC.length)*5);
+  const divScore = Math.min(1, clusteredCats.size/6);
+  return { score:(clusterScore+divScore)/2, trustScore:Math.min(1,coverage*(withC.length/20)), clusterCount, typeDiversity:clusteredCats.size };
+}
+
+function computeWtgDecomposition(classified) {
+  const wtg = classified.filter(p => p._cls.isWtg);
+  if (!wtg.length) return null;
+  const scaffold = wtg.filter(p => !p.primaryType || SCAFFOLD_TYPES.has(p.primaryType));
+  const venues   = wtg.filter(p =>  p.primaryType && !SCAFFOLD_TYPES.has(p.primaryType));
+  const sTypes = {};
+  for (const p of scaffold) sTypes[p.primaryType||'unknown'] = (sTypes[p.primaryType||'unknown']||0)+1;
+  return {
+    total: wtg.length, venues: venues.length, scaffold: scaffold.length,
+    ratio: scaffold.length/Math.max(1,wtg.length),
+    scaffoldTypes: Object.entries(sTypes).sort((a,b)=>b[1]-a[1]).slice(0,5),
+  };
+}
+
+function computeOutlierFavorites(classified) {
+  const favs = classified.filter(p => p._cls.isFavorite);
+  if (favs.length < 3) return {};
+  const byCategory = {};
+  for (const p of favs) (byCategory[p.category||'Other'] = byCategory[p.category||'Other']||[]).push(p);
+  const outliers = {};
+  for (const [cat, group] of Object.entries(byCategory)) {
+    if (group.length < 3) continue;
+    const ratings = group.filter(p=>p.rating!=null).map(p=>p.rating);
+    if (ratings.length < 2) continue;
+    const avg = ratings.reduce((s,v)=>s+v,0)/ratings.length;
+    const priceMode = mode(group.filter(p=>p.priceLevel).map(p=>p.priceLevel));
+    const found = group.filter(p =>
+      (p.rating!=null && Math.abs(p.rating-avg)>0.8) ||
+      (p.priceLevel && priceMode && p.priceLevel!==priceMode)
+    ).slice(0,3);
+    if (found.length) outliers[cat] = found.map(p => ({
+      displayName: p.displayName, id: p.id,
+      note: p.rating!=null&&Math.abs(p.rating-avg)>0.8 ? `rating ${p.rating} vs avg ${avg.toFixed(1)}` : `price ${p.priceLevel} vs typical ${priceMode}`,
+    }));
+  }
+  return outliers;
+}
+
+function sampleAnchors(places, n) {
+  return places.filter(p=>p.displayName).sort(()=>Math.random()-0.5).slice(0,n).map(p=>p.displayName);
+}
+
+function rankUncertainties(ex, classified) {
+  const u = [];
+  if (!ex.hasFavoritesSignal) u.push({ id:'no_favorites', dimension:'Preference signal', seed:'No favorites-type list — cannot determine what the user has actually chosen vs. saved aspirationally', priority:10, anchors:sampleAnchors(classified,3) });
+  if (ex.atmosphereProxy.trustScore < 0.4) u.push({ id:'atmosphere', dimension:'Atmosphere / vibe preference', seed:'Editorial summary coverage too low to infer atmosphere preferences reliably', priority:9, anchors:sampleAnchors(classified.filter(p=>p.category==='Restaurant'||p.category==='Bar'),3) });
+  const nonMono = Object.entries(ex.priceBehavior||{}).filter(([,v])=>v.nonMonotonic).map(([k])=>k);
+  if (nonMono.length) u.push({ id:'price', dimension:'Price relationship', seed:`Non-monotonic price-to-preference curve in ${nonMono[0]} — unclear if this is value-seeking or context-specific`, priority:7, anchors:sampleAnchors(classified.filter(p=>p.category===nonMono[0]&&p.priceLevel),3) });
+  if (ex.wtgDecomposition) {
+    const r = ex.wtgDecomposition.ratio;
+    if (r>0.35||r<0.08) u.push({ id:'exploration', dimension:'Exploration style', seed: r>0.35?'WTG list is heavily scaffold/neighborhood-oriented — unclear how venue-specific preferences translate':'WTG is almost entirely venues — low neighborhood/exploration intent', priority:6, anchors:sampleAnchors(classified.filter(p=>p._cls.isWtg),3) });
+  }
+  if (ex.walkabilityProxy.trustScore < 0.35) u.push({ id:'urban_texture', dimension:'Urban texture / neighborhood preference', seed:'Geographic data insufficient to infer density or walkability preferences', priority:5, anchors:sampleAnchors(classified.filter(p=>p._hasGeometry),3) });
+  const churn = Object.entries(ex.conversionByType||{}).filter(([,v])=>v.quadrant==='churn').map(([k])=>k);
+  if (churn.length) u.push({ id:'churn', dimension:`${churn[0]} save behavior`, seed:`High save volume but low conversion for ${churn[0]} — unclear if saves are intentional or reflexive`, priority:6, anchors:sampleAnchors(classified.filter(p=>p.primaryType===churn[0]),3) });
+  return u.sort((a,b)=>b.priority-a.priority).slice(0,5);
+}
+
+function runExtraction(places) {
+  const allLists = [...new Set(places.flatMap(p=>p.sourceList.split(';').map(s=>s.trim())))];
+  const listClassification = Object.fromEntries(allLists.map(l=>[l, classifySourceList(l)]));
+  const hasFavoritesSignal = Object.values(listClassification).some(t=>t==='favorites');
+  const classified = places.map(p=>({...p, _cls:classifyPlace(p)}));
+
+  const threshold = conversionThreshold(places);
+  const convMap = {};
+  for (const p of classified) {
+    const t = p.primaryType||'unknown';
+    if (!convMap[t]) convMap[t] = { total:0, favorited:0 };
+    convMap[t].total++;
+    if (p._cls.isFavorite) convMap[t].favorited++;
+  }
+  for (const v of Object.values(convMap)) v.conversionRate = v.total ? v.favorited/v.total : 0;
+  const conversionByType = hasFavoritesSignal ? assignQuadrants(convMap, threshold) : convMap;
+
+  const PRICE_ORDER = ['PRICE_LEVEL_FREE','PRICE_LEVEL_INEXPENSIVE','PRICE_LEVEL_MODERATE','PRICE_LEVEL_EXPENSIVE','PRICE_LEVEL_VERY_EXPENSIVE'];
+  const priceRaw = {};
+  for (const p of classified) {
+    if (!p.priceLevel) continue;
+    const cat = p.category||'Other';
+    if (!priceRaw[cat]) priceRaw[cat] = {};
+    if (!priceRaw[cat][p.priceLevel]) priceRaw[cat][p.priceLevel] = {total:0,fav:0};
+    priceRaw[cat][p.priceLevel].total++;
+    if (p._cls.isFavorite) priceRaw[cat][p.priceLevel].fav++;
+  }
+  const priceBehavior = {};
+  for (const [cat,pd] of Object.entries(priceRaw)) {
+    const curve = PRICE_ORDER.filter(pl=>pd[pl]&&pd[pl].total>=2).map(pl=>({ priceLevel:pl, rate:pd[pl].fav/pd[pl].total, count:pd[pl].total }));
+    if (curve.length < 2) continue;
+    const diffs = curve.slice(1).map((c,i)=>c.rate-curve[i].rate);
+    priceBehavior[cat] = { curve, nonMonotonic: diffs.some(d=>d>0.12)&&diffs.some(d=>d<-0.12) };
+  }
+
+  const atmosphereProxy = computeAtmosphereProxy(places);
+  const walkabilityProxy = computeWalkabilityProxy(places);
+  const wtgDecomposition = computeWtgDecomposition(classified);
+  const outlierFavorites = hasFavoritesSignal ? computeOutlierFavorites(classified) : {};
+  const datasetConfidence = (
+    places.filter(p=>p._hasGeometry).length/places.length +
+    places.filter(p=>p.editorialSummary).length/places.length +
+    places.filter(p=>p.primaryType).length/places.length +
+    (hasFavoritesSignal?1:0)
+  ) / 4;
+
+  const ex = { datasetSize:places.length, listClassification, hasFavoritesSignal, conversionByType, priceBehavior, atmosphereProxy, walkabilityProxy, wtgDecomposition, outlierFavorites, datasetConfidence, uncertainties:[] };
+  ex.uncertainties = rankUncertainties(ex, classified);
+  return ex;
+}
+
+// ── Gemini ────────────────────────────────────────────────────────────────────
+
+async function geminiCall({ system='', contents, temperature=0.7, maxTokens=1500 }) {
+  const url = `${GEMINI_BASE}/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const body = { contents, generationConfig:{ temperature, maxOutputTokens:maxTokens } };
+  if (system) body.system_instruction = { parts:[{ text:system }] };
+  const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+  if (!res.ok) { const e=await res.json().catch(()=>({})); throw new Error(e.error?.message||`Gemini error ${res.status}`); }
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
+function buildInterviewSystem(ex) {
+  const listLines = Object.entries(ex.listClassification)
+    .map(([l,t])=>`  ${l}${t?' → '+t:' (unclassified — treated as distinct list)'}`)
+    .join('\n');
+  const convLines = Object.entries(ex.conversionByType)
+    .filter(([,v])=>v.quadrant)
+    .sort((a,b)=>b[1].conversionRate-a[1].conversionRate)
+    .slice(0,8)
+    .map(([t,v])=>`  ${t}: ${v.total} saved, ${Math.round(v.conversionRate*100)}% favorited — ${v.quadrant}`)
+    .join('\n');
+  const uncLines = ex.uncertainties
+    .map((u,i)=>`${i+1}. [${u.dimension}] ${u.seed}\n   Anchors to use: ${u.anchors.join(', ')||'(none available)'}`)
+    .join('\n\n');
+  return `You are conducting a short preference interview for a personalized travel recommendation engine. The user's Google Maps saved places have been analyzed. Resolve specific uncertainties the data could not answer — do not conduct a general interview.
+
+DATASET ANALYSIS
+${ex.datasetSize} places | lists: ${Object.keys(ex.listClassification).length}
+${listLines}
+${ex.hasFavoritesSignal?`\nConversion by type:\n${convLines||'  (insufficient data per type)'}`:'\nNo favorites-type list — cannot compute conversion from data alone.'}
+Atmosphere signal trust: ${Math.round(ex.atmosphereProxy.trustScore*100)}% (${ex.atmosphereProxy.sampleSize} editorial summaries)
+Walkability signal trust: ${Math.round(ex.walkabilityProxy.trustScore*100)}%
+${ex.wtgDecomposition?`WTG: ${ex.wtgDecomposition.venues} venues, ${ex.wtgDecomposition.scaffold} scaffold (${Math.round(ex.wtgDecomposition.ratio*100)}% scaffold)`:'No want-to-go list.'}
+Dataset confidence: ${Math.round(ex.datasetConfidence*100)}%
+
+UNCERTAINTIES TO RESOLVE (ranked by recommendation impact)
+${uncLines||'None — data fully characterized.'}
+
+RULES
+- One question at a time.
+- Target the highest-priority unresolved uncertainty first.
+- Every question must name the user's actual saved places as anchors — never ask in the abstract.
+- After each answer, collapse resolved uncertainties and advance to the next.
+- Target 5 questions. Stop early if all high-impact uncertainties are resolved. Continue past 5 only if critical gaps remain.
+- When done, output exactly INTERVIEW_COMPLETE on its own line.
+
+Begin with question 1.`;
+}
+
+function buildSynthesisPrompt(ex, history) {
+  const transcript = history
+    .filter(m=>!(m.role==='user'&&m.parts[0].text==='Begin.'))
+    .map(m=>`${m.role==='user'?'User':'Interviewer'}: ${m.parts[0].text}`)
+    .join('\n\n');
+  const topConv = Object.entries(ex.conversionByType)
+    .filter(([,v])=>v.quadrant==='conviction'||v.quadrant==='niche_passion')
+    .sort((a,b)=>b[1].conversionRate-a[1].conversionRate)
+    .slice(0,6)
+    .map(([t,v])=>`${t}: ${Math.round(v.conversionRate*100)}% conversion, ${v.total} saves, ${v.quadrant}`)
+    .join('\n');
+  const atmoTop = Object.entries(ex.atmosphereProxy.scores||{})
+    .filter(([,v])=>v>0.1).sort((a,b)=>b[1]-a[1])
+    .map(([d,v])=>`${d} (${Math.round(v*100)}%)`).join(', ');
+  return `Synthesize a preference profile from the analysis and interview below.
+
+ANALYSIS
+Dataset: ${ex.datasetSize} places | Confidence: ${Math.round(ex.datasetConfidence*100)}%
+${ex.hasFavoritesSignal&&topConv?`Conviction/niche types:\n${topConv}`:'No favorites conversion signal.'}
+Atmosphere signals: ${atmoTop||'none (low trust)'}
+${ex.wtgDecomposition?`WTG: ${Math.round(ex.wtgDecomposition.ratio*100)}% scaffold (${ex.wtgDecomposition.ratio>0.3?'exploration-oriented':'venue-focused'})`.trim():''}
+
+INTERVIEW TRANSCRIPT
+${transcript||'(no interview conducted — synthesize from data alone)'}
+
+OUTPUT FORMAT — use exactly this structure:
+
+PREFERENCE PROFILE — [complete | provisional]
+
+DIMENSION [n]: [name]
+Definition: [1-2 sentences; use the user's own words from the transcript where explicit]
+Weight: [low | medium | high | primary]
+Anchors: [2-3 actual place names from their dataset]
+Confidence: [solid | soft]
+
+PROFILE STATUS
+[complete: ready for the recommendation layer | provisional: name which dimensions remain soft and why]
+
+Rules: be specific ("prefers casual $$-and-under neighborhood spots" beats "likes casual places"); pull definitions from the user's exact words; anchor places must be real names from the dataset; output only the schema, no preamble.`;
+}
+
+// ── Step 6 UI ─────────────────────────────────────────────────────────────────
+
+let interviewHistory = [];
+let interviewSystem = '';
+let extractionResult = null;
+
+function phShow(id) {
+  ['ph-start','ph-extracting','ph-summary','ph-interview','ph-schema','ph-error']
+    .forEach(p => { const el=$(p); if(el) el.style.display = el.id===id?'':'none'; });
+}
+
+function phError(msg) { $('ph-error').textContent=msg; phShow('ph-error'); }
+
+function renderExtractionSummary(ex) {
+  const conviction = Object.entries(ex.conversionByType)
+    .filter(([,v])=>v.quadrant==='conviction'||v.quadrant==='niche_passion')
+    .sort((a,b)=>b[1].conversionRate-a[1].conversionRate).slice(0,4);
+  let html = '<div class="th-summary-grid">';
+  html += `<div class="th-summary-card"><div class="th-summary-label">Places</div><div class="th-summary-value">${ex.datasetSize}</div></div>`;
+  html += `<div class="th-summary-card"><div class="th-summary-label">Confidence</div><div class="th-summary-value">${Math.round(ex.datasetConfidence*100)}%</div></div>`;
+  html += `<div class="th-summary-card"><div class="th-summary-label">Atmosphere signal</div><div class="th-summary-value">${Math.round(ex.atmosphereProxy.trustScore*100)}% trust</div></div>`;
+  if (ex.wtgDecomposition) html += `<div class="th-summary-card"><div class="th-summary-label">WTG</div><div class="th-summary-value">${ex.wtgDecomposition.venues}v / ${ex.wtgDecomposition.scaffold}s</div></div>`;
+  html += `<div class="th-summary-card"><div class="th-summary-label">Gaps to resolve</div><div class="th-summary-value">${ex.uncertainties.length}</div></div>`;
+  html += '</div>';
+  if (conviction.length) html += `<p class="th-hint" style="margin-top:0.75rem">Conviction types: ${conviction.map(([t,v])=>`${t} (${Math.round(v.conversionRate*100)}%)`).join(', ')}.</p>`;
+  if (!ex.hasFavoritesSignal) html += `<p class="th-hint" style="margin-top:0.5rem">No favorites list detected — the interview will establish your preference signals directly.</p>`;
+  $('extraction-summary').innerHTML = html;
+}
+
+function appendChat(role, text) {
+  const chat = $('interview-chat');
+  const div = document.createElement('div');
+  div.className = `th-chat-msg th-chat-${role}`;
+  div.textContent = text.replace(/INTERVIEW_COMPLETE\s*/g,'').trim();
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+$('analyze-btn').addEventListener('click', async () => {
+  phShow('ph-extracting');
+  try {
+    extractionResult = runExtraction(enrichedPlaces);
+    renderExtractionSummary(extractionResult);
+    interviewSystem = buildInterviewSystem(extractionResult);
+    phShow('ph-summary');
+  } catch(e) { phError(`Analysis failed: ${e.message}`); }
+});
+
+$('start-interview-btn').addEventListener('click', async () => {
+  phShow('ph-interview');
+  $('interview-input-row').style.display = 'none';
+  $('interview-status').textContent = 'Thinking…';
+  interviewHistory = [{ role:'user', parts:[{text:'Begin.'}] }];
+  try {
+    const first = await geminiCall({ system:interviewSystem, contents:interviewHistory, temperature:0.75 });
+    interviewHistory.push({ role:'model', parts:[{text:first}] });
+    appendChat('model', first);
+    $('interview-status').textContent = '';
+    if (first.includes('INTERVIEW_COMPLETE')) { await synthesize(); return; }
+    $('interview-input-row').style.display = '';
+    $('interview-input').focus();
+  } catch(e) { phError(`Interview failed: ${e.message}`); }
+});
+
+$('interview-submit').addEventListener('click', async () => {
+  const answer = $('interview-input').value.trim();
+  if (!answer) return;
+  $('interview-input').value = '';
+  $('interview-submit').disabled = true;
+  $('interview-input').disabled = true;
+  $('interview-status').textContent = 'Thinking…';
+  interviewHistory.push({ role:'user', parts:[{text:answer}] });
+  appendChat('user', answer);
+  try {
+    const resp = await geminiCall({ system:interviewSystem, contents:interviewHistory, temperature:0.75 });
+    interviewHistory.push({ role:'model', parts:[{text:resp}] });
+    appendChat('model', resp);
+    $('interview-status').textContent = '';
+    if (resp.includes('INTERVIEW_COMPLETE')) { await synthesize(); return; }
+    $('interview-submit').disabled = false;
+    $('interview-input').disabled = false;
+    $('interview-input').focus();
+  } catch(e) {
+    $('interview-status').textContent = `Error: ${e.message}`;
+    $('interview-submit').disabled = false;
+    $('interview-input').disabled = false;
+  }
+});
+
+async function synthesize() {
+  $('interview-input-row').style.display = 'none';
+  $('interview-status').textContent = 'Synthesizing your preference profile…';
+  try {
+    const prompt = buildSynthesisPrompt(extractionResult, interviewHistory);
+    const schema = await geminiCall({ contents:[{role:'user',parts:[{text:prompt}]}], temperature:0.45, maxTokens:2500 });
+    phShow('ph-schema');
+    $('schema-output').textContent = schema;
+    markDone(6);
+  } catch(e) { phError(`Synthesis failed: ${e.message}`); }
+}
+
+$('copy-schema-btn').addEventListener('click', () => {
+  navigator.clipboard.writeText($('schema-output').textContent).then(() => {
+    $('copy-schema-btn').textContent = 'Copied!';
+    setTimeout(() => { $('copy-schema-btn').textContent = 'Copy to clipboard'; }, 2000);
+  });
+});
 </script>
