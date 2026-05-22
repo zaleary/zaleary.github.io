@@ -1045,7 +1045,7 @@ const GEMINI_MODEL = 'gemini-2.0-flash';
 // ── List classification ───────────────────────────────────────────────────────
 
 const LIST_PATTERNS = {
-  favorites: /\b(favor|favour|starred?|liked?|bookmarked?)\b/i,
+  favorites: /\bfavou?r(?:ites?)?\b|\bstarred?\b|\bliked?\b|\bbookmarked?\b/i,
   wtg:       /want\s*(to\s*)?(go|visit|try)|wish\s*list|to\s*visit|bucket/i,
   visited:   /\b(visit(ed)?|been\s*there?|went|checked?\s*in)\b/i,
 };
@@ -1467,32 +1467,41 @@ function parseEnrichedCSV(text) {
   const headers = parseCSVRow(lines[0]).map(h => h.trim().toLowerCase());
   const toFloat = s => { const n = parseFloat(s); return isNaN(n) ? null : n; };
   const toInt   = s => { const n = parseInt(s, 10); return isNaN(n) ? null : n; };
-  const get = (vals, name) => { const i = headers.indexOf(name); return i >= 0 ? (vals[i] || '').trim() : ''; };
+  // Try multiple column name aliases (supports both original and transformed CSV formats)
+  const col = (...names) => names.map(n => headers.indexOf(n)).find(i => i >= 0) ?? -1;
+  const get = (vals, ...names) => { const i = col(...names); return i >= 0 ? (vals[i] || '').trim() : ''; };
+
+  // Normalize price level: accept both "$$$" and "PRICE_LEVEL_EXPENSIVE"
+  const PRICE_SYM = { '$':'PRICE_LEVEL_INEXPENSIVE','$$':'PRICE_LEVEL_MODERATE',
+    '$$$':'PRICE_LEVEL_EXPENSIVE','$$$$':'PRICE_LEVEL_VERY_EXPENSIVE','Free':'PRICE_LEVEL_FREE' };
+  const normPrice = s => s.startsWith('PRICE_LEVEL_') ? s : (PRICE_SYM[s] || '');
+  // Normalize business status: accept both "OPERATIONAL" and "BUSINESS_STATUS_OPERATIONAL"
+  const normBiz = s => !s ? '' : s.startsWith('BUSINESS_STATUS_') ? s : 'BUSINESS_STATUS_' + s;
 
   const places = [];
   for (let i = 1; i < lines.length; i++) {
     if (!lines[i].trim()) continue;
     const vals = parseCSVRow(lines[i]);
-    const lat = toFloat(get(vals, 'latitude'));
-    const lng = toFloat(get(vals, 'longitude'));
+    const lat = toFloat(get(vals, 'latitude', 'lat'));
+    const lng = toFloat(get(vals, 'longitude', 'lng'));
     places.push({
-      displayName:         get(vals, 'displayname') || null,
-      id:                  get(vals, 'id') || null,
+      displayName:         get(vals, 'displayname', 'name') || null,
+      id:                  get(vals, 'id', 'place_id') || null,
       formattedAddress:    get(vals, 'formattedaddress') || null,
       latitude: lat, longitude: lng,
-      primaryType:         get(vals, 'primarytype') || null,
-      types:               get(vals, 'types') || null,
+      primaryType:         get(vals, 'primarytype', 'primary_type') || null,
+      types:               get(vals, 'types', 'all_types') || null,
       category:            get(vals, 'category') || null,
       rating:              toFloat(get(vals, 'rating')),
-      userRatingCount:     toInt(get(vals, 'userratingcount')),
-      priceLevel:          get(vals, 'pricelevel') || null,
-      businessStatus:      get(vals, 'businessstatus') || null,
-      websiteUri:          get(vals, 'websiteuri') || null,
-      nationalPhoneNumber: get(vals, 'nationalphonenumber') || null,
-      googleMapsUri:       get(vals, 'googlemapsuri') || null,
-      editorialSummary:    get(vals, 'editorialsummary') || null,
-      sourceList:          get(vals, 'sourcelist') || '',
-      ingestionTimestamp:  get(vals, 'ingestiontimestamp') || '',
+      userRatingCount:     toInt(get(vals, 'userratingcount', 'user_ratings_total')),
+      priceLevel:          normPrice(get(vals, 'pricelevel', 'price_level')) || null,
+      businessStatus:      normBiz(get(vals, 'businessstatus', 'business_status')) || null,
+      websiteUri:          get(vals, 'websiteuri', 'website') || null,
+      nationalPhoneNumber: get(vals, 'nationalphonenumber', 'formatted_phone_number') || null,
+      googleMapsUri:       get(vals, 'googlemapsuri', 'url') || null,
+      editorialSummary:    get(vals, 'editorialsummary', 'editorial_summary') || null,
+      sourceList:          get(vals, 'sourcelist', 'source_list_name') || '',
+      ingestionTimestamp:  get(vals, 'ingestiontimestamp', 'ingestion_timestamp') || '',
       _hasGeometry: lat != null && lng != null,
     });
   }
