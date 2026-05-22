@@ -1447,7 +1447,8 @@ async function synthesize() {
     const schema = await geminiCall({ contents:[{role:'user',parts:[{text:prompt}]}], temperature:0.45, maxTokens:2500 });
     phShow('ph-schema');
     $('schema-output').textContent = schema;
-    markDone(6);
+    const num6 = $('num-6');
+    num6.textContent = '✓'; num6.classList.add('done');
   } catch(e) { phError(`Synthesis failed: ${e.message}`); }
 }
 
