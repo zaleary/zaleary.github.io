@@ -188,10 +188,19 @@ h3 {
   margin: 0;
 }
 
-.post-page {
-  margin-top: 2.2rem;
+.post-subtitle {
+  font-size: 1.05rem;
+  color: var(--muted);
+  margin: 0 0 1.6rem;
+}
+
+.post-card {
+  background: var(--card);
+  border: 1px solid rgba(27, 27, 27, 0.08);
+  border-radius: 16px;
+  padding: 1.8rem 2rem;
+  box-shadow: 0 4px 24px var(--shadow);
   width: 100%;
-  max-width: 720px;
 }
 
 .post-content h2,
