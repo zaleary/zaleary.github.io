@@ -1,0 +1,190 @@
+This is the shape the profile must take. The interview fills it, the Method reads it, and the filled version is saved as Preferences.md.
+
+Do not restructure it. Do not reorder sections. Do not delete a section that does not apply, mark it Not applicable and say why in one line, because a missing section reads as an oversight and a marked one reads as a decision.
+
+Text in square brackets is instruction to you, the interviewer, and must not survive into the filled profile. Replace it with the user's actual content in their own words.
+
+Two sections at the end are filled later, at calibration, not during the interview. Leave them with their placeholder text.
+
+---
+
+# Travel Preference Profile
+
+Owner: [name or handle]
+Created: [date]
+Last calibrated: [leave as Not yet calibrated]
+Data path: [Google Maps export, or memory only, or export below the useful floor]
+
+# Place layer
+
+## Universal dimensions
+
+[Two to four. Each is scored on every place, higher is better. A1 is the floor found by the degradation test and is the veto. Order the rest by weight, heaviest first.]
+
+[The short names matter more than they look. They are what the engine says out loud to the user, since the IDs are internal and never surfaced. Pick names the user would recognize as their own phrasing and that read naturally in a sentence about a place.]
+
+**A1. [Short name, in the user's own words]** — THE FLOOR. [Two to four sentences describing what this is and what satisfies it. Quote the user's phrasing wherever it is theirs, the engine reasons in this vocabulary. State plainly what failing it looks like, since this dimension disqualifies a place regardless of everything else.]
+
+**A2. [Short name]** — [Two to four sentences. Same rules.]
+
+**A3. [Short name, if there is one]** — [Two to four sentences.]
+
+**A4. [Short name, if there is one]** — [Two to four sentences.]
+
+## Archetype dimensions
+
+[One to three. These are identities a place can have, reasons to go, never penalties when absent. If a place has one it is a strong positive the engine must call out explicitly.]
+
+**B1. [Short name]** — [Two to four sentences describing the identity and what earns it. Be specific about what does not earn it, archetypes are strong claims and are routinely over-assigned.]
+
+**B2. [Short name, if there is one]** — [Two to four sentences.]
+
+**B3. [Short name, if there is one]** — [Two to four sentences.]
+
+## C1, location context
+
+[The kind of district, neighborhood, and route position the user wants, described so it can be applied to any city they have never been to. Location-independent. Name the texture, the density, the tenancy mix, who is out on the street, what the engine should steer toward and what it should steer away from. Three to six sentences.]
+
+## Validation rule
+
+[How this user wants reputation weighed against current form. Default text if the interview surfaced nothing more specific: reputation, awards, review volume, and hype are unvalidated signals, neither proxies for quality nor disqualifying, and must be checked against current evidence. Add anything user-specific, for example a stated allergy to award-chasing or a stated trust in a particular critic class.]
+
+## Searched-for categories
+
+[An explicit list. The engine searches exactly what is named here and nothing else, so omissions are silent failures. One line each, category name plus any note on how deep to go or what qualifies.]
+
+## Specialist interests
+
+[Any category deep enough that finding the category is not enough and only depth within it satisfies. Name what depth looks like with concrete examples from the interview. If none, write None.]
+
+## Convictions
+
+[Any cuisine or category the user is devoted to. State it as a bonus applied to great food the engine has already found, never as a search target, and say so in the entry itself so the rule travels with it. If none, write None.]
+
+## Context flags
+
+[Conditions that shape output without being scored. For each, say whether it is a preference the engine should weigh or a hard requirement it must satisfy. Cover at minimum the ones below, adding any others the interview surfaced.]
+
+Energy and crowd texture: [what the room should feel like, including whether both ends are disqualifying]
+
+Acoustic: [noise tolerance, and whether conversation must be possible]
+
+Time envelope: [when evenings end by default, any outer bound, and whether mornings are prime hours or dead time]
+
+Party context: [solo default or companion default, and exactly what changes in companion mode, per-recommendation requirements included]
+
+Dietary: [any constraint, whose it is, and whether it is active by default or only in companion mode]
+
+Budget posture: [a filter and tiebreaker only, never a quality signal]
+
+## Hotels
+
+[State ON or OFF on the first line. If OFF, write one line explaining that the user treats a hotel as where they sleep and wants no hotel recommendations, then skip the rest of this section.]
+
+Status: [ON or OFF]
+
+How hotels are judged: [If ON, how the universal and archetype dimensions apply to a hotel specifically, judged against the hotel's own ambition. Two to four sentences.]
+
+Stay versus visit: [Whether the user would wander a great hotel's public spaces without booking. This drives the STAY and VISIT split and is easy to miss.]
+
+Cost band: [Nightly range, solo and with a companion if they differ. A band, not a ceiling. State explicitly whether an expensive hotel fails on cost or on taste, because those are different filters and the interview was required to split them.]
+
+Credits and programs: [Any loyalty program or card credit that changes effective nightly, with its terms and reset periods. Context only, never a quality signal. Note that the user maintains these terms themselves. If none, write None.]
+
+## Anti-profile
+
+**Hard filters.** [Conditions that remove a candidate entirely, no matter how well it scores. Expect few. Only list something here if the user could not name any exception during the interview.]
+
+**Negative weightings.** [Conditions that push a candidate down but allow an exceptional instance through. Each one must carry its override condition, what would make it worth it, stated concretely. A negative weighting without an override is a hard filter in disguise and will silently delete good places.]
+
+**Boredom threshold.** [The descriptors that signal a place is generic, corporate, soulless, or by-the-numbers. If current reviews read this way, the engine drops the place hard. Use the user's own words.]
+
+**False-negative guard.** [Any category the user has few or no examples in that is a high-bar discovery target rather than a dislike. The engine treats these as discovery opportunities and surfaces only exceptional examples. Name them explicitly so they do not get quietly excluded.]
+
+# Destination-selection layer
+
+[This layer answers where to go, not what to do once there. Its dimension labels are namespaced to this layer and do not collide with the place layer's.]
+
+## Destination universal dimensions
+
+[Two to four. A1 is the floor here too.]
+
+**A1. [Short name]** — THE FLOOR. [Two to four sentences. For most users this is predicted yield, whether a place-level engine pointed at this destination would actually find things they love. If so, say it in their words and note that yield is latent rather than surface, a high-friction destination is not a low-yield one when the friction is discovery cost the engine can neutralize.]
+
+**A2. [Short name]** — [Two to four sentences.]
+
+**A3. [Short name, if there is one]** — [Two to four sentences.]
+
+**A4. [Short name, if there is one]** — [Two to four sentences.]
+
+## Destination archetypes
+
+**B1. [Short name]** — [Two to four sentences. Reasons to go, never penalties when absent.]
+
+**B2. [Short name, if there is one]** — [Two to four sentences.]
+
+**B3. [Short name, if there is one]** — [Two to four sentences.]
+
+## Trip modes
+
+[The shapes a trip can take for this user. City trip is the usual default. Others might be a water or outdoor trip, a constrained weekend, a long corridor journey, or a base plus day trips. For each, state what changes about scoring, and list any mode-only requirements as a checklist rather than as dimensions. Name which mode is the default and which modes are out of scope for this engine entirely.]
+
+## Destination context weights
+
+Connectivity: [how travel time and connections from origin are priced, and how that changes with trip length]
+
+Season: [how the travel window is judged, texture first, and whether a festival or peak program ever justifies peak crowds and pricing]
+
+Recency: [how recently visiting a place suppresses it, and whether regional substitution applies, preferring an unvisited alternative near something loved]
+
+Cost: [filter and tiebreaker only]
+
+Live-worthy: [whether would-return and would-live are different verbs for this user, and if so record live-worthy as an annotation only, never a ranking input]
+
+## Destination anti-profile
+
+**Hard filters.** [Expect very few. Usually reduces to a destination with nothing to be in and no reason to go, plus anything the user described as plastic or inauthentic at destination scale.]
+
+**Negative weightings.** [Each with its override condition.]
+
+**Standing suppressions.** [Trip classes that should never surface unprompted.]
+
+## Destination ledger
+
+[Short and finite, not an inventory. Only destinations with a disposition worth recording. This supplies candidates and the recency and substitution signals. Individual venues never live here.]
+
+Want to go: [name, and one line on the imagined appeal, which is itself a preference statement]
+
+Visited: [name, a disposition-leading reason, and a date. The engine reads the disposition from how the note opens, so lead with it. Three dispositions.
+
+Explored and satisfied for now, suppress it. Not a judgment on the place, they are just done with it for a while.
+
+Been there and ready to go back, favor it.
+
+Been there and not ready, plus the reason, which is the part that matters. If the reason is recency or cost of getting there, this is a suppression that expires and the place may still be loved. If the reason is that it underdelivered, this is a taste signal and down-weights the place and things like it. Do not collapse these two, they behave completely differently.]
+
+Not interested: [name, the reason, and whether it is revisitable]
+
+## Discovery targets
+
+[Categories or regions the user is drawn to but has not penetrated, which the engine should actively surface rather than treat as absence. At least one shortlist slot is reserved for these.]
+
+# Calibration output
+
+[These two sections are filled during the calibration run, not during the interview. Leave the placeholder text below exactly as written until then.]
+
+## Field-validated exemplars
+
+Not yet calibrated. Run a fresh conversation in this project and say Calibrate.
+
+[At calibration, this becomes a short list of places the engine surfaced independently and the user confirmed. Each gets one line, the name, the city, and what about it the profile correctly predicted. These are few-shot calibration for future runs, so they must be engine-found and user-confirmed, never merely asserted.]
+
+## Output exemplar
+
+Not yet calibrated.
+
+[At calibration, this becomes one trimmed district section from the calibration run, roughly six hundred words, kept as the depth and voice reference for all future output. Trim it to the strongest two or three entries plus the district framing. It is a format reference, not a recommendation list, and the places in it are not to be re-recommended on that basis.]
+
+# Amendments
+
+[Amendments proposed by the engine after field pushback get appended here, one line each, dated. They take effect the next time the instructions are rebaked. Leave this section empty at the end of the interview.]
