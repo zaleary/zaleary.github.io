@@ -11,7 +11,7 @@
       {% endif %}
     </title>
     <meta name="description" content="{{ page.excerpt | default: site.description | strip_html | strip_newlines | truncate: 160 }}" />
-    <link rel="stylesheet" href="{{ '/assets/css/styles.css' | relative_url }}?v=5" />
+    <link rel="stylesheet" href="{{ '/assets/css/styles.css' | relative_url }}?v=6" />
   </head>
   <body>
     <main class="page">
@@ -19,8 +19,8 @@
         <div class="content-inner">
           <header class="hero">
             <h1><a class="post-link" href="{{ '/' | relative_url }}">Zack O'Leary</a></h1>
-            <p class="credentials">PA-C, FAWM, EHR Nerd</p>
-            <p class="bio">Clinical care and clinical systems. In clinic. In config. In crisis.</p>
+            <p class="credentials">Medicine, Misadventures, Master Plans.</p>
+            <p class="bio">Diagnosing humans, redesigning workflows, and over-complicating simple routines for fun.</p>
           </header>
           {{ content }}
         </div>
