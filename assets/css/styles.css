@@ -28,53 +28,10 @@ body {
 
 .page {
   min-height: 100svh;
-  display: grid;
-  grid-template-columns: 200px minmax(0, 1fr);
-  grid-template-rows: 1fr auto;
-  padding: 6vw;
+  display: flex;
+  flex-direction: column;
+  padding: 6vw clamp(1.25rem, 6vw, 4rem);
   gap: 3rem;
-}
-
-.sidebar {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  padding-top: 0.4rem;
-}
-
-.learning {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  align-items: center;
-  text-align: center;
-}
-
-.connect {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  align-items: center;
-  text-align: center;
-}
-
-.projects {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  align-items: center;
-  text-align: center;
-}
-
-.headshot {
-  width: 150px;
-  height: 150px;
-  border-radius: 999px;
-  object-fit: cover;
-  object-position: center;
-  border: 2px solid rgba(109, 74, 165, 0.2);
-  box-shadow: 0 14px 32px rgba(109, 74, 165, 0.18);
 }
 
 .link {
@@ -96,6 +53,39 @@ body {
 .content {
   display: flex;
   align-items: flex-start;
+  justify-content: center;
+  flex: 1;
+}
+
+.site-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.6rem 1.1rem;
+  width: 100%;
+  max-width: 720px;
+  margin-inline: auto;
+  padding-top: 1.6rem;
+  border-top: 1px solid rgba(27, 27, 27, 0.08);
+}
+
+.site-footer .sep {
+  color: var(--muted);
+  user-select: none;
+}
+
+/* The row fits on one line until roughly 530px of viewport. Below that it
+   wraps, and a separator would dangle at the start of the second line, so
+   drop the dots and let the gap do the separating. */
+@media (max-width: 540px) {
+  .site-footer .sep {
+    display: none;
+  }
+
+  .site-footer {
+    gap: 0.7rem 1.5rem;
+  }
 }
 
 .content-inner {
@@ -252,39 +242,9 @@ h3 {
   box-shadow: 0 4px 12px rgba(109, 74, 165, 0.3);
 }
 
-.label {
-  font-family: "Space Grotesk", "Avenir Next", "Avenir", sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  font-size: 0.7rem;
-  color: var(--muted);
-  margin-bottom: 0.4rem;
-}
-
 @media (max-width: 640px) {
   .page {
     padding: 8vw;
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr auto;
-  }
-
-  .sidebar {
-    align-items: flex-start;
-  }
-
-  .learning {
-    align-items: flex-start;
-    text-align: left;
-  }
-
-  .connect {
-    align-items: flex-start;
-    text-align: left;
-  }
-
-  .projects {
-    align-items: flex-start;
-    text-align: left;
   }
 
   .hero {

@@ -11,36 +11,10 @@
       {% endif %}
     </title>
     <meta name="description" content="{{ page.excerpt | default: site.description | strip_html | strip_newlines | truncate: 160 }}" />
-    <link rel="stylesheet" href="{{ '/assets/css/styles.css' | relative_url }}?v=4" />
+    <link rel="stylesheet" href="{{ '/assets/css/styles.css' | relative_url }}?v=5" />
   </head>
   <body>
     <main class="page">
-      <aside class="sidebar">
-        <img
-          class="headshot"
-          src="{{ '/assets/images/headshot.jpg' | relative_url }}"
-          alt="Headshot of Zack O'Leary"
-          width="160"
-          height="160"
-        />
-        <nav class="learning">
-          <span class="label">Learning</span>
-          <a class="link" href="https://www.gue.com/store/books/fundamentals-better-diving" target="_blank" rel="noreferrer">Diving</a>
-          <a class="link" href="https://americansailing.com/learn-to-sail/certifications/asa-104-bareboat-cruising/" target="_blank" rel="noreferrer">Sailing</a>
-          <a class="link" href="https://online.stanford.edu/courses/sohs-ystatslearningp-statistical-learning-python" target="_blank" rel="noreferrer">Data</a>
-        </nav>
-        <nav class="projects">
-          <span class="label">Projects</span>
-          <a class="link" href="/goodlibby/">GoodLibby</a>
-          <a class="link" href="/takeout-hydrator/">Takeout Hydrator</a>
-        </nav>
-        <nav class="connect">
-          <span class="label">Connect</span>
-          <a class="link" href="mailto:me@zaleary.tv">Email Me</a>
-          <a class="link" href="https://www.linkedin.com/in/zaleary/" target="_blank" rel="noreferrer">LinkedIn</a>
-        </nav>
-      </aside>
-
       <section class="content">
         <div class="content-inner">
           <header class="hero">
@@ -51,6 +25,16 @@
           {{ content }}
         </div>
       </section>
+
+      <footer class="site-footer">
+        <a class="link" href="/goodlibby/">GoodLibby</a>
+        <span class="sep" aria-hidden="true">·</span>
+        <a class="link" href="/takeout-hydrator/">Takeout Hydrator</a>
+        <span class="sep" aria-hidden="true">·</span>
+        <a class="link" href="mailto:me@zaleary.tv">Email Me</a>
+        <span class="sep" aria-hidden="true">·</span>
+        <a class="link" href="https://www.linkedin.com/in/zaleary/" target="_blank" rel="noreferrer">LinkedIn</a>
+      </footer>
     </main>
   </body>
 </html>
