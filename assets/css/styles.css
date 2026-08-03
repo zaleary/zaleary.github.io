@@ -221,36 +221,35 @@ h3 {
   margin-bottom: 0.5rem;
 }
 
-.downloads {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.7rem;
-  margin: 2.2rem 0 0;
-  padding: 1.2rem 1.4rem;
-  border-radius: 16px;
-  border: 1px solid rgba(27, 27, 27, 0.08);
-  background: rgba(255, 255, 255, 0.6);
+.download-cta {
+  margin: 2.2rem 0 0.4rem;
 }
 
-.downloads .label {
-  margin-bottom: 0.2rem;
-}
-
-.download-link {
-  color: var(--ink);
-  text-decoration: none;
+.download-button {
+  display: inline-block;
   font-family: "Space Grotesk", "Avenir Next", "Avenir", sans-serif;
-  font-weight: 500;
-  border-bottom: 1px solid rgba(27, 27, 27, 0.2);
-  padding-bottom: 2px;
-  transition: color 150ms ease, border-color 150ms ease;
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+  color: #fbf9f6;
+  background: var(--accent);
+  text-decoration: none;
+  padding: 0.85rem 1.6rem;
+  border-radius: 999px;
+  box-shadow: 0 6px 18px rgba(109, 74, 165, 0.28);
+  transition: background 150ms ease, box-shadow 150ms ease, transform 150ms ease;
 }
 
-.download-link:hover,
-.download-link:focus-visible {
-  color: var(--accent);
-  border-color: var(--accent);
+.download-button:hover,
+.download-button:focus-visible {
+  background: #5a3d8a;
+  box-shadow: 0 8px 22px rgba(109, 74, 165, 0.36);
+  transform: translateY(-1px);
+}
+
+.download-button:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 12px rgba(109, 74, 165, 0.3);
 }
 
 .label {

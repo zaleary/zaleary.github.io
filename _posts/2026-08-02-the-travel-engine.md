@@ -50,12 +50,6 @@ Files are attached. Start with the README, it's five steps.
 
 If you build one, I'd love to hear what it got wrong. That's how mine got good.
 
-<div class="downloads">
-  <span class="label">Download the kit</span>
-  <a class="download-link" href="/assets/travel-engine/0-README.txt" download="0 README.md">0 README.md</a>
-  <a class="download-link" href="/assets/travel-engine/1-START-HERE.txt" download="1 START HERE.md">1 START HERE.md</a>
-  <a class="download-link" href="/assets/travel-engine/2-Method.txt" download="2 Method.md">2 Method.md</a>
-  <a class="download-link" href="/assets/travel-engine/3-Interview.txt" download="3 Interview.md">3 Interview.md</a>
-  <a class="download-link" href="/assets/travel-engine/4-Skeleton.txt" download="4 Skeleton.md">4 Skeleton.md</a>
-  <a class="download-link" href="/assets/travel-engine/5-Calibration.txt" download="5 Calibration.md">5 Calibration.md</a>
-</div>
+<p class="download-cta">
+  <a class="download-button" href="/assets/travel-engine/the-kit.zip" download="The Kit.zip">Download the kit</a>
+</p>
